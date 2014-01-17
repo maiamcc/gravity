@@ -7,11 +7,9 @@ var START_TIME          = currentTime();
 var GRID_SPACING        = 160;
 var GRID_LINE_THICKNESS = 4;
 
-var LINE_COLOR          = makeColor(0.7,0.7,0.7);
-
-var TILE_SIZE             = 50
-var BOARD_SIZE_X          = 10 //screenWidth / TILE_SIZE
-var BOARD_SIZE_Y          = 10 //screenHeight / TILE_SIZE
+var TILE_SIZE             = 100
+var BOARD_SIZE_X          = floor( screenWidth / TILE_SIZE );
+var BOARD_SIZE_Y          = floor( screenHeight / TILE_SIZE );
 
 
 // colors
@@ -23,6 +21,7 @@ var yellow = makeColor(0.5, 0.5, 0, 1)
 var cyan = makeColor( 0, 0.5, 0.5, 1)
 var white = makeColor(1, 1, 1, 1);
 var black = makeColor(0, 0, 0, 1);
+var gray = makeColor(0.7,0.7,0.7);
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -57,34 +56,25 @@ function onTick() {
     // Some sample drawing 
     clearScreen();
 
-    // Draw a white background
-    fillRectangle(0, 0, screenWidth, screenHeight, white );
+    // Draw a black background
+    fillRectangle(0, 0, screenWidth, screenHeight, black );
 
-    // put little dots in the board cuz I can.
+    // Draw a white background where the board is
+    fillRectangle( board[0][0].corner.x, board[0][0].corner.y, TILE_SIZE * BOARD_SIZE_X, TILE_SIZE * BOARD_SIZE_Y, white );
 
+    
+    // draw the board, grid lines, walls
     for ( var x = 0; x < BOARD_SIZE_X; x++ ){
         for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
-            fillCircle( board[x][y].center.x, board[x][y].center.y, 5, blue )
+            //if it's a wall, fill it in
+            if ( board[x][y].wall == true ){
+                fillRectangle( board[x][y].corner.x, board[x][y].corner.y, TILE_SIZE, TILE_SIZE, purple );    
+            }
+            strokeRectangle( board[x][y].corner.x, board[x][y].corner.y, TILE_SIZE, TILE_SIZE, gray, 3 );
         }
     }
 
-    fillCircle( board[0][0].x, board[0][0].y, 10, red )
-
-/*
-    // Draw vertical lines
-    x = 0;
-    while (x <= screenWidth) {
-        fillRectangle(x - GRID_LINE_THICKNESS/2, 0, GRID_LINE_THICKNESS, screenHeight, LINE_COLOR);
-        x = x + GRID_SPACING;
-    }
-
-    // Horizontal lines
-    y = 0;
-    while (y <= screenHeight) {
-        fillRectangle(0, y - GRID_LINE_THICKNESS / 2, screenWidth, GRID_LINE_THICKNESS, LINE_COLOR);
-        y = y + GRID_SPACING;
-    }
-*/
+    fillCircle( board[0][0].center.x, board[0][0].center.y, 10, red );
 }
 
 
@@ -106,13 +96,33 @@ function makeBoard(){
         for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
             tile = makeObject();
             
+            // Top left corner of the tile in pixels
+            cornerX = (screenWidth - TILE_SIZE * BOARD_SIZE_X) / 2 + x * TILE_SIZE;
+            cornerY = (screenHeight - TILE_SIZE * BOARD_SIZE_Y) / 2 + y * TILE_SIZE;
+            tile.corner = new vec2( cornerX, cornerY );
+
             // Center of the tile in pixels
             centerX = (screenWidth - TILE_SIZE * BOARD_SIZE_X) / 2 + (x + 0.5) * TILE_SIZE;
-            centerY = (screenHeight - TILE_SIZE * BOARD_SIZE_Y) / 2 + (y + 0.5) * TILE_SIZE + 100;
+            centerY = (screenHeight - TILE_SIZE * BOARD_SIZE_Y) / 2 + (y + 0.5) * TILE_SIZE;
             tile.center = new vec2( centerX, centerY );
+
             tile.wall = false;
             
             board[x][y] = tile;
         }  
     }
+
+    // make a few walls just to see what happens
+    board[0][11].wall = true;
+    board[1][11].wall = true;
+    board[2][11].wall = true;
+    board[3][11].wall = true;
+    board[4][11].wall = true;
+    board[5][11].wall = true;
+    board[6][11].wall = true;
+    board[7][11].wall = true;
+    board[8][11].wall = true;
+    board[9][11].wall = true;
+    board[10][11].wall = true;
+    board[11][11].wall = true;
 }
