@@ -13,6 +13,11 @@ GRAVITY implementation plan
 	b) when holding L or R, move sprite linearly L or R at CUR_SPEED, where speed gets incremented every tick by HORIZ_ACCEL until it equals MAX_SPEED. On release, decrement CUR_SPEED by HORIZ_ACCEL untli CUR_SPEED = 0. HORIZ_ACCEL should be small
 		i. requires key code for L and R arrow keys
 		ii. (on tick, draw sprite at sprite.pos)
+	c) NEEDS TO NOT RUN INTO WALLS!
+3.5) don't run into walls
+	a) give sprite upper left and lower right bounds
+	b) every move (or all the time) check to see if the getTile( thessbounds ) is a wall tile. If so, DON'T MOVE (set velocity to zero? just don't set the position of the sprite?)
+			--> I left off here and it's kinda fucked up.
 4) gravity & jumping
 	a) necessary properties: CUR_SPEED, MAX_SPEED, HORIZ_ACCEL, VERT_ACCEL
 5) reversing gravity

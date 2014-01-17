@@ -11,10 +11,8 @@ var TILE_SIZE             = 90
 var BOARD_SIZE_X          = 21 //floor( screenWidth / TILE_SIZE );
 var BOARD_SIZE_Y          = 14 //floor( screenHeight / TILE_SIZE );
 
-var START_SPEED           = 2
-        var TEST_SPEED      = 10
-var MAX_SPEED             = 20
-var HORIZ_ACCEL           = 5
+var MAX_SPEED             = 7
+var HORIZ_ACCEL           = 0.5
 // colors
 var red = makeColor(1, 0, 0, 1);
 var green = makeColor(0, 1, 0, 1);
@@ -46,8 +44,9 @@ var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
 
 // TODO: DECLARE your variables here
 var lastKeyCode;
-var moveLeft = false;
-var moveRight = false;
+var leftDown = false;
+var rightDown = false;
+var velocity = 0;
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -61,29 +60,35 @@ function onSetup() {
 
     makeBoard();
 
-    dude = makeDude( board[7][BOARD_SIZE_Y-2].center.x, board[7][BOARD_SIZE_Y-2].center.y, blue );
+    dude = makeDude( board[7][BOARD_SIZE_Y-2].center.x, board[7][BOARD_SIZE_Y-2].center.y, cyan );
 
 }
 
 
 // When a key is pushed
 function onKeyStart(key) {    
-    if ( key == 37 ){
-        moveLeft = true;
-    } else if ( key == 39 ){
-        moveRight = true;
-    } else if ( key == 38 ){
+    if ( key == 37 ){ // left arrow
+        leftDown = true;
+    } else if ( key == 39 ){ // right arrow
+        rightDown = true;
+    } else if ( key == 38 ){ // up arrow
         // jump goes here
-    } else if ( key == 32 ){
+    } else if ( key == 32 ){ // spacebar
         // gravity reverse goes here
     }
 }
 
+// USE TO FIND COORDS ON THE SCREEN
+/*
+function onClick( x, y ){
+    console.log( x.toString() + ", " + y.toString())
+}*/
+
 function onKeyEnd(key) {
     if ( key == 37 || key == 39 ){
-        stop();
-    } else if ( key == 39 ){
-        moveRight = true;
+        leftDown = false;
+        rightDown = false;
+        velocity = 0;
     } else if ( key == 38 ){
         // jump goes here
     } else if ( key == 32 ){
@@ -114,27 +119,55 @@ function render() {
             if ( board[x][y].wall == true ){
                 fillRectangle( board[x][y].corner.x, board[x][y].corner.y, TILE_SIZE, TILE_SIZE, purple );    
             }
+            
+            // draw grid
             strokeRectangle( board[x][y].corner.x, board[x][y].corner.y, TILE_SIZE, TILE_SIZE, gray, 3 );
         }
     }
 
-    // later, will be sprite
+    // draw the player
     drawDude();
-    //fillCircle( board[7][BOARD_SIZE_Y-2].center.x, board[7][BOARD_SIZE_Y-2].center.y, TILE_SIZE/2, cyan );
 }
 
 function simulate(){
-    if ( moveLeft == true ){
-        setPosX( dude, dude.pos.x - TEST_SPEED );
-    } else if ( moveRight == true ){
-        setPosX( dude, dude.pos.x + TEST_SPEED );
+    var nextPos;
+
+// left off here trying to do collision detection, it doesn't work so good.
+    if ( leftDown == true ){
+        accelerateHoriz( "left" );
+        nextPos = new vec2( dude.pos.x + velocity, dude.pos.y )
+        console.log( nextPos )
+        
+    } else if ( rightDown == true ){
+        accelerateHoriz( "right" )
+        nextPos = new vec2( dude.pos.x + velocity, dude.pos.y )
     }
+
+    if ( getTile( dude.pos ).wall == true ){
+        console.log( "PANIC!")
+          } else {
+           console.log( "wird")
+           setPos( dude, nextPos );
+        }
 }
 
-// MOVEMENT RULES
-function stop(){
-    moveLeft = false;
-    moveRight = false;
+function accelerateHoriz( dir ){
+
+    if ( dir == "left" ){
+        var mod = HORIZ_ACCEL * -1
+        var multiplier = -1
+    } else if ( dir == "right" ){
+        var mod = HORIZ_ACCEL
+        var multiplier = 1
+    }
+
+    if ( abs( velocity + mod ) <= MAX_SPEED ){
+        velocity = velocity + mod;  
+    } else if ( abs( velocity + mod ) > MAX_SPEED && abs( velocity ) < MAX_SPEED ){
+        velocity = MAX_SPEED * multiplier
+    } else {
+        velocity = velocity;
+    }
 }
 
 ///////////////////////////////////////////////////////////////
@@ -146,12 +179,17 @@ function stop(){
     // make the dude
     function makeDude( xstart, ystart, startcolor ){
         position = new vec2( xstart, ystart )
-        return { pos : position, color : startcolor };
+        ul_corner = new vec2( xstart - TILE_SIZE/2, ystart - TILE_SIZE/2 );
+        lr_corner = new vec2( xstart + TILE_SIZE/2, ystart + TILE_SIZE/2 );
+        return { pos : position, color : startcolor, upperLeft : ul_corner, lowerRight : lr_corner };
     }
 
     // draw the dude
     function drawDude(){
-        fillCircle( dude.pos.x, dude.pos.y, TILE_SIZE/2, dude.color );
+        //fillCircle( dude.pos.x, dude.pos.y, TILE_SIZE/2, dude.color );
+        fillRectangle( dude.pos.x - TILE_SIZE/2, dude.pos.y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE, dude.color );
+        dude.upperLeft = new vec2( dude.pos.x - TILE_SIZE/2, dude.pos.y - TILE_SIZE/2 );
+        dude.lowerRight = new vec2( dude.pos.x + TILE_SIZE/2, dude.pos.y + TILE_SIZE/2 );
     }
 
     // make the board
@@ -177,6 +215,8 @@ function stop(){
                 centerY = (screenHeight - TILE_SIZE * BOARD_SIZE_Y) / 2 + (y + 0.5) * TILE_SIZE;
                 tile.center = new vec2( centerX, centerY );
 
+                tile.coords = new vec2( x, y );
+
                 if ( substring( mapStrings[y], x, x+1 ) == "X" ){
                     tile.wall = true;
                 } else {
@@ -191,7 +231,7 @@ function stop(){
 // MODIFYIN' STUFF
     
     // set position of an object
-    function setPos( object, pos) {
+    function setPos( object, pos ) {
         object.pos = new vec2(pos)
     }
 
@@ -204,3 +244,14 @@ function stop(){
     function setPosY( object, posY ) {
         object.pos = new vec2( object.pos.x, posY )
     }
+
+
+
+
+// get index of a tile, given an (x,y) position
+    function getTile( pos ){
+        xIndex = floor( pos.x / TILE_SIZE );
+        yIndex = floor( pos.y / TILE_SIZE );
+        return board[xIndex][yIndex];
+    }
+
