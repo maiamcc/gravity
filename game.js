@@ -7,9 +7,9 @@ var START_TIME          = currentTime();
 var GRID_SPACING        = 160;
 var GRID_LINE_THICKNESS = 4;
 
-var TILE_SIZE             = 100
-var BOARD_SIZE_X          = floor( screenWidth / TILE_SIZE );
-var BOARD_SIZE_Y          = floor( screenHeight / TILE_SIZE );
+var TILE_SIZE             = 90
+var BOARD_SIZE_X          = floor( screenWidth / TILE_SIZE ); // 19
+var BOARD_SIZE_Y          = floor( screenHeight / TILE_SIZE ); // 12
 
 
 // colors
@@ -23,6 +23,20 @@ var white = makeColor(1, 1, 1, 1);
 var black = makeColor(0, 0, 0, 1);
 var gray = makeColor(0.7,0.7,0.7);
 
+var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
+                    "_____________________",
+                    "_______XXXX__________",
+                    "__________X__________",
+                    "__________XXXX_______",
+                    "_____________X_______",
+                    "_____________X_______",
+                    "_____________________",
+                    "_____________________",  
+                    "________________X____",
+                    "________________X____",
+                    "______________XXX____",
+                    "______________XXX____",
+                    "XXXXXXXXXXXXXXXXXXXXX" ]
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                     MUTABLE STATE                         //
@@ -74,13 +88,16 @@ function onTick() {
         }
     }
 
-    fillCircle( board[0][0].center.x, board[0][0].center.y, 10, red );
+    // later, will be sprite
+    fillCircle( board[7][BOARD_SIZE_Y-2].center.x, board[7][BOARD_SIZE_Y-2].center.y, TILE_SIZE/2, cyan );
 }
 
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                      HELPER RULES                         //
+
+// MAKIN' STUFF
 
 // draw the board
 
@@ -106,23 +123,13 @@ function makeBoard(){
             centerY = (screenHeight - TILE_SIZE * BOARD_SIZE_Y) / 2 + (y + 0.5) * TILE_SIZE;
             tile.center = new vec2( centerX, centerY );
 
-            tile.wall = false;
+            if ( substring( mapStrings[y], x, x+1 ) == "X" ){
+                tile.wall = true;
+            } else {
+                tile.wall = false;
+            }
             
             board[x][y] = tile;
         }  
     }
-
-    // make a few walls just to see what happens
-    board[0][11].wall = true;
-    board[1][11].wall = true;
-    board[2][11].wall = true;
-    board[3][11].wall = true;
-    board[4][11].wall = true;
-    board[5][11].wall = true;
-    board[6][11].wall = true;
-    board[7][11].wall = true;
-    board[8][11].wall = true;
-    board[9][11].wall = true;
-    board[10][11].wall = true;
-    board[11][11].wall = true;
 }
