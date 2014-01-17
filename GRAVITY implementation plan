@@ -1,0 +1,23 @@
+GRAVITY implementation plan
+
+1) make a grid that's accessible via array
+	a) board[][] array that I can itterate through
+	b) each board tile should have .center and .corner properties so I can access its info easily
+	c) for visibility, maybe draw lines delineating tiles
+2) put stuff on the screen--walls and space
+	a) for every tile where tile.wall = true, put a wall (fill a black rectangle)
+	b) initially, do this manually. Later, can compare to an array from a text file; if textfile array element contains X, set corresponding board array to tile.wall = true
+	c) then, make a sprite (probably just a circle to start with)
+3) sprite motion - L/R
+	a) necessary properties: CUR_SPEED, MAX_SPEED, HORIZ_ACCEL, VERT_ACCEL
+	b) when holding L or R, move sprite linearly L or R at CUR_SPEED, where speed gets incremented every tick by HORIZ_ACCEL until it equals MAX_SPEED. On release, decrement CUR_SPEED by HORIZ_ACCEL untli CUR_SPEED = 0. HORIZ_ACCEL should be small
+		i. requires key code for L and R arrow keys
+		ii. (on tick, draw sprite at sprite.pos)
+4) gravity & jumping
+	a) necessary properties: CUR_SPEED, MAX_SPEED, HORIZ_ACCEL, VERT_ACCEL
+5) reversing gravity
+6) goal point
+7) level loader (populates board array from text file)
+8) next level
+9) obstacles: spikes (cause death), buttons (open locks)
+10) bells and whistles like a start screen, timer, help text, etc.
