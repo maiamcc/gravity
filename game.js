@@ -13,6 +13,7 @@ var BOARD_SIZE_Y          = 14 //floor( screenHeight / TILE_SIZE );
 
 var MAX_SPEED             = 7
 var HORIZ_ACCEL           = 0.5
+var GRAVITY               = 3;
 // colors
 var red = makeColor(1, 0, 0, 1);
 var green = makeColor(0, 1, 0, 1);
@@ -46,7 +47,8 @@ var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
 var lastKeyCode;
 var leftDown = false;
 var rightDown = false;
-var velocity = 0;
+var horiz_velocity = 0;
+var nextPos;
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -60,7 +62,9 @@ function onSetup() {
 
     makeBoard();
 
-    dude = makeDude( board[7][BOARD_SIZE_Y-2].center.x, board[7][BOARD_SIZE_Y-2].center.y, cyan );
+    dude = makeDude( board[12][2].center.x, board[12][2].center.y, cyan );
+
+        //board[7][BOARD_SIZE_Y-2].center.x, board[7][BOARD_SIZE_Y-2].center.y, cyan );
 
 }
 
@@ -79,16 +83,16 @@ function onKeyStart(key) {
 }
 
 // USE TO FIND COORDS ON THE SCREEN
-/*
+
 function onClick( x, y ){
     console.log( x.toString() + ", " + y.toString())
-}*/
+}
 
 function onKeyEnd(key) {
     if ( key == 37 || key == 39 ){
         leftDown = false;
         rightDown = false;
-        velocity = 0;
+        horiz_velocity = 0;
     } else if ( key == 38 ){
         // jump goes here
     } else if ( key == 32 ){
@@ -130,29 +134,21 @@ function render() {
 }
 
 function simulate(){
-    var nextPos;
+
 
 // left off here trying to do collision detection, it doesn't work so good.
     if ( leftDown == true ){
-        accelerateHoriz( "left" );
-        nextPos = new vec2( dude.pos.x + velocity, dude.pos.y )
-        console.log( nextPos )
+        moveHoriz( "left" );    
         
     } else if ( rightDown == true ){
-        accelerateHoriz( "right" )
-        nextPos = new vec2( dude.pos.x + velocity, dude.pos.y )
+        moveHoriz( "right" );
     }
 
-    if ( getTile( dude.pos ).wall == true ){
-        console.log( "PANIC!")
-          } else {
-           console.log( "wird")
-           setPos( dude, nextPos );
-        }
 }
 
 function accelerateHoriz( dir ){
 
+    // figure out relevant values (i.e. positive vs. negative) according to direction of motion
     if ( dir == "left" ){
         var mod = HORIZ_ACCEL * -1
         var multiplier = -1
@@ -161,15 +157,27 @@ function accelerateHoriz( dir ){
         var multiplier = 1
     }
 
-    if ( abs( velocity + mod ) <= MAX_SPEED ){
-        velocity = velocity + mod;  
-    } else if ( abs( velocity + mod ) > MAX_SPEED && abs( velocity ) < MAX_SPEED ){
-        velocity = MAX_SPEED * multiplier
+    // calculate new horiz_velocity, not exceeding max speed
+    if ( abs( horiz_velocity + mod ) <= MAX_SPEED ){
+        horiz_velocity = horiz_velocity + mod;  
+    } else if ( abs( horiz_velocity + mod ) > MAX_SPEED && abs( horiz_velocity ) < MAX_SPEED ){
+        horiz_velocity = MAX_SPEED * multiplier
     } else {
-        velocity = velocity;
+        horiz_velocity = horiz_velocity;
     }
 }
 
+    // move horizontally
+    function moveHoriz( dir ){
+        accelerateHoriz( dir );
+        nextPos = new vec2( dude.pos.x + horiz_velocity, dude.pos.y )
+            if ( isWall( getUpperLeft( nextPos ) ) || isWall( getLowerRight( nextPos ) ) ){
+                console.log( "PANIC!")
+            } else {
+                console.log( "wird")
+                setPos( dude, nextPos );
+            }
+    }
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                      HELPER RULES                         //
@@ -255,3 +263,19 @@ function accelerateHoriz( dir ){
         return board[xIndex][yIndex];
     }
 
+// check for a wall, given a position
+    function isWall( pos ){
+        return getTile( pos ).wall;
+    }
+
+// given the center of an object, get its upper left corner
+    function getUpperLeft( pos ){
+        ul_corner = new vec2( pos.x - TILE_SIZE/2, pos.y - TILE_SIZE/2 );
+        return ul_corner;
+    }
+
+// given the center of an object, get its upper left corner
+    function getLowerRight( pos ){
+        lr_corner = new vec2( pos.x + TILE_SIZE/2, pos.y + TILE_SIZE/2 );
+        return lr_corner;
+    }
