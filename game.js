@@ -14,6 +14,7 @@ var BOARD_SIZE_Y          = 14 //floor( screenHeight / TILE_SIZE );
 var MAX_SPEED             = 7
 var HORIZ_ACCEL           = 0.5
 var GRAVITY               = 3;
+var JUMP_SPEED            = -100;
 // colors
 var red = makeColor(1, 0, 0, 1);
 var green = makeColor(0, 1, 0, 1);
@@ -35,9 +36,9 @@ var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "_____________________",
                     "_____________________",  
                     "________________X____",
-                    "________________X____",
-                    "______________XXX____",
-                    "______________XXX____",
+                    "__X______X______X____",
+                    "__X______X____XXX____",
+                    "__X______X____XXX____",
                     "XXXXXXXXXXXXXXXXXXXXX" ]
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -48,6 +49,7 @@ var lastKeyCode;
 var leftDown = false;
 var rightDown = false;
 var horiz_velocity = 0;
+var vert_velocity = 0;
 var nextPos;
 
 ///////////////////////////////////////////////////////////////
@@ -62,9 +64,9 @@ function onSetup() {
 
     makeBoard();
 
-    dude = makeDude( board[12][2].center.x, board[12][2].center.y, cyan );
+    dude = makeDude( board[7][3].center.x, board[7][3].center.y, cyan );
 
-        //board[7][BOARD_SIZE_Y-2].center.x, board[7][BOARD_SIZE_Y-2].center.y, cyan );
+    //board[7][BOARD_SIZE_Y-3].center.x, board[7][BOARD_SIZE_Y-3].center.y, cyan );
 
 }
 
@@ -76,7 +78,7 @@ function onKeyStart(key) {
     } else if ( key == 39 ){ // right arrow
         rightDown = true;
     } else if ( key == 38 ){ // up arrow
-        // jump goes here
+        vert_velocity = JUMP_SPEED;
     } else if ( key == 32 ){ // spacebar
         // gravity reverse goes here
     }
@@ -104,6 +106,7 @@ function onKeyEnd(key) {
 function onTick() {
     simulate();
     render();
+    console.log( vert_velocity );
 }
 
 function render() {
@@ -144,6 +147,7 @@ function simulate(){
         moveHoriz( "right" );
     }
 
+    moveVert();
 }
 
 function accelerateHoriz( dir ){
@@ -172,9 +176,17 @@ function accelerateHoriz( dir ){
         accelerateHoriz( dir );
         nextPos = new vec2( dude.pos.x + horiz_velocity, dude.pos.y )
             if ( isWall( getUpperLeft( nextPos ) ) || isWall( getLowerRight( nextPos ) ) ){
-                console.log( "PANIC!")
             } else {
-                console.log( "wird")
+                setPos( dude, nextPos );
+            }
+    }
+
+    function moveVert( dir ){
+        vert_velocity = vert_velocity + GRAVITY;
+        nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
+            if ( isWall( getUpperLeft( nextPos ) ) || isWall( getLowerRight( nextPos ) ) ){
+                vert_velocity = 0
+            } else {
                 setPos( dude, nextPos );
             }
     }

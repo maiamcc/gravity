@@ -18,6 +18,7 @@ GRAVITY implementation plan
 	a) give sprite upper left and lower right bounds
 	b) every move (or all the time) check to see if the getTile( thessbounds ) is a wall tile. If so, DON'T MOVE (set velocity to zero? just don't set the position of the sprite?)
 			--> I left off here and it's kinda fucked up.
+	c) PROBLEM: super imprecise. Overshoots walls to the left, and undershoots to the right. Don't know what's up, bah. Need to keep moving up until the wall.
 4) gravity & jumping
 	a) necessary properties: CUR_SPEED, MAX_SPEED, HORIZ_ACCEL, VERT_ACCEL
 5) reversing gravity
