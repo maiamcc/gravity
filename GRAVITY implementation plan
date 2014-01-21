@@ -20,8 +20,13 @@ GRAVITY implementation plan
 			--> I left off here and it's kinda fucked up.
 	c) PROBLEM: super imprecise. Overshoots walls to the left, and undershoots to the right. Don't know what's up, bah. Need to keep moving up until the wall.
 4) gravity & jumping
-	a) necessary properties: CUR_SPEED, MAX_SPEED, HORIZ_ACCEL, VERT_ACCEL
 5) reversing gravity
+
+To do at this point:
+- reset jumping when vert_velocity = 0, i.e. no double jumps
+- more precise collision detection
+- start screen?
+
 6) goal point
 7) level loader (populates board array from text file)
 8) next level
