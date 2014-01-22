@@ -10,7 +10,7 @@ var BOARD_SIZE_Y          = 14 //floor( screenHeight / TILE_SIZE );
 
 var MAX_SPEED             = 10
 var HORIZ_ACCEL           = 1
-var GRAVITY               = 3
+var GRAVITY               = 3 // must be >= 2
 var JUMP_SPEED            = -70
 
 var pi                    = 3.14159265359
@@ -119,24 +119,11 @@ function render() {
     // Draw a white background where the board is
     fillRectangle( board[0][0].corner.x, board[0][0].corner.y, TILE_SIZE * BOARD_SIZE_X, TILE_SIZE * BOARD_SIZE_Y, white );
 
-    // dots on edges
-    /*dudeEdges = pointsOnCircle( dude.pos, dude.radius )
-    for (var i=0; i<dudeEdges.length; i++){
-        fillCircle( dudeEdges[i].x, dudeEdges[i].y, 10, red )
+    // dots on edges of a square
+    /*blockSides = pointsOnSquare( board[2][12].corner, TILE_SIZE, "horiz" );
+    for (var i=0; i<blockSides.length; i++){
+        fillCircle( blockSides[i].x, blockSides[i].y, 10, red )
     }*/
-
-
-
-    // dots in the corners
-    /*dude.upperLeft = new vec2( dude.pos.x - TILE_SIZE/2, dude.pos.y - TILE_SIZE/2 );
-    dude.upperRight = new vec2( dude.pos.x + TILE_SIZE/2, dude.pos.y - TILE_SIZE/2 );
-    dude.lowerLeft = new vec2( dude.pos.x - TILE_SIZE/2, dude.pos.y + TILE_SIZE/2 );
-    dude.lowerRight = new vec2( dude.pos.x + TILE_SIZE/2, dude.pos.y + TILE_SIZE/2 );
-
-    fillCircle( dude.upperLeft.x, dude.upperLeft.y, 10, red )
-    fillCircle( dude.upperRight.x, dude.upperRight.y, 10, red )
-    fillCircle( dude.lowerLeft.x, dude.lowerLeft.y, 10, red )
-    fillCircle( dude.lowerRight.x, dude.lowerRight.y, 10, red )*/
     
     // draw the board, grid lines, walls
     for ( var x = 0; x < BOARD_SIZE_X; x++ ){
@@ -198,9 +185,10 @@ function accelerateHoriz( dir ){
     function moveHoriz( dir ){
         accelerateHoriz( dir );
         nextPos = new vec2( dude.pos.x + horiz_velocity, dude.pos.y )
-        nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
+        nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos, "horiz" ) } );
             if( nextCollides ){
-                insertBack( debugShapes, nextPos )
+
+                //insertBack( debugShapes, nextPos )
                 var curTile = getTile( dude.pos );
                 setPos( dude, vec2 ( curTile.center.x, dude.pos.y ) );
             } else {
@@ -214,10 +202,24 @@ function accelerateHoriz( dir ){
         nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
 
             if( nextCollides ){
-                insertBack( debugShapes, nextPos )
-                var curTile = getTile( dude.pos ); 
-                setPos( dude, vec2( dude.pos.x, curTile.center.y ) );
-                vert_velocity = 0;
+                //insertBack( debugShapes, nextPos ) 
+                vert_velocity = vert_velocity/2
+                nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
+                nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
+                if ( nextCollides ){
+                    vert_velocity = vert_velocity/2
+                    nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
+                    nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );            
+                    if ( nextCollides ){
+                        vert_velocity = 0
+                    } else {
+                        setPos( dude, nextPos );    
+                    }
+                } else {
+                    setPos( dude, nextPos );
+                }
+                //var curTile = getTile( dude.pos ); 
+                //setPos( dude, vec2( dude.pos.x, curTile.center.y ) );
             } else {
                 setPos( dude, nextPos );
             }
@@ -323,8 +325,13 @@ function accelerateHoriz( dir ){
         return getTile( pos ).wall;
     }
 // check for a collision in a position
-    function checkIntersection( tile, pos ){
-        tileEdges = pointsOnSquare( tile.corner, TILE_SIZE );
+    function checkIntersection( tile, pos, direction ){
+        var tileEdges = []; 
+        if ( direction == "horiz" ){
+            tileEdges = pointsOnSquare( tile.corner, TILE_SIZE, "horiz" );
+        } else {
+            tileEdges = pointsOnSquare( tile.corner, TILE_SIZE );
+        }
         if ( pos == null){
             intersection = forAny( tileEdges, withinCircle);            
         } else {
@@ -399,7 +406,7 @@ function accelerateHoriz( dir ){
     }
 
 // points on square
-    function pointsOnSquare( corner, s ){
+    /* function pointsOnSquare( corner, s ){
         var squareEdges = [];
         var nPoint, ePoint, sPoint, wPoint
         var z = 5
@@ -421,6 +428,41 @@ function accelerateHoriz( dir ){
             insertBack( squareEdges, ePoint );
             insertBack( squareEdges, sPoint );
             insertBack( squareEdges, wPoint );
+        }
+            return squareEdges
+    }*/
+
+    function pointsOnSquare( corner, s, direction ){
+        var squareEdges = [];
+        var nPoint, ePoint, sPoint, wPoint
+        var z = 5
+        var nwCorner = new vec2( corner.x, corner.y + 1 )
+        var neCorner = new vec2( corner.x + s, corner.y + 1 )
+        var seCorner = new vec2( corner.x + s, corner.y - 1 + s )
+        var swCorner = new vec2( corner.x, corner.y - 1 + s )
+
+            insertBack( squareEdges, nwCorner );
+            insertBack( squareEdges, neCorner );
+            insertBack( squareEdges, seCorner );
+            insertBack( squareEdges, swCorner );
+
+            /*insertBack( debugShapes, nwCorner );
+            insertBack( debugShapes, neCorner );
+            insertBack( debugShapes, seCorner );
+            insertBack( debugShapes, swCorner );*/
+        for (var i=1; i<z; i++){
+            
+            ePoint = new vec2( neCorner.x, neCorner.y + i * (s/z) )
+            wPoint = new vec2( corner.x, corner.y + i * (s/z) )
+            insertBack( squareEdges, ePoint );
+            insertBack( squareEdges, wPoint );
+
+            if ( direction !== "horiz" ){
+                nPoint = new vec2( corner.x + i * (s/z), corner.y )
+                sPoint = new vec2( swCorner.x + i * (s/z), swCorner.y )
+                insertBack( squareEdges, nPoint );
+                insertBack( squareEdges, sPoint );
+            }
         }
             return squareEdges
     }
