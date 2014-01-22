@@ -50,6 +50,7 @@ var rightDown = false;
 var horiz_velocity = 0;
 var vert_velocity = 0;
 var nextPos;
+var debugShapes = []
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -150,17 +151,14 @@ function render() {
         }
     }
 
-        // dots on some squares
-    tileEdges = pointsOnSquare( board[7][12].corner, TILE_SIZE )
-    for (var i=0; i<tileEdges.length; i++){
-        fillCircle( tileEdges[i].x, tileEdges[i].y, 10, red )
-    }
-
     // draw the player
     drawDude();
 
     // draw the goal
     drawGoal();
+
+    // draw any debugging shapes
+    debugDraw();
 }
 
 function simulate(){
@@ -200,21 +198,26 @@ function accelerateHoriz( dir ){
     function moveHoriz( dir ){
         accelerateHoriz( dir );
         nextPos = new vec2( dude.pos.x + horiz_velocity, dude.pos.y )
-        nextCollides = forAny( walls, checkIntersection );
-        //nextCollides = checkIntersection( board[2][12]);
-        console.log( nextCollides );
-                //if( checkCollision( nextPos )){
-                    //console.log( "boom!" );
-           // } else {
+        nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
+            if( nextCollides ){
+                insertBack( debugShapes, nextPos )
+                var curTile = getTile( dude.pos );
+                setPos( dude, vec2 ( curTile.center.x, dude.pos.y ) );
+            } else {
                 setPos( dude, nextPos );
-            //}
+            }
     }
 
     function moveVert( dir ){
         vert_velocity = vert_velocity + GRAVITY;
         nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
-            if( checkCollision( nextPos )){
-                vert_velocity = 0
+        nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
+
+            if( nextCollides ){
+                insertBack( debugShapes, nextPos )
+                var curTile = getTile( dude.pos ); 
+                setPos( dude, vec2( dude.pos.x, curTile.center.y ) );
+                vert_velocity = 0;
             } else {
                 setPos( dude, nextPos );
             }
@@ -242,6 +245,13 @@ function accelerateHoriz( dir ){
     function drawGoal(){
         fillRectangle( goal.pos.x - TILE_SIZE/2, goal.pos.y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE, goal.color );
     }
+
+    function debugDraw(){
+        for (var i = 0; i<debugShapes.length; i++){
+            fillCircle( debugShapes[i].x, debugShapes[i].y, 5, red );
+        }
+    }
+
 
     // make the board
     function makeBoard(){
@@ -318,7 +328,7 @@ function accelerateHoriz( dir ){
         if ( pos == null){
             intersection = forAny( tileEdges, withinCircle);            
         } else {
-            intsesection = forAny( tileEdges, function( point ){ withinCircle( point, pos )} )
+            intersection = forAny( tileEdges, function( point ){ return withinCircle( point, pos )} )
         }
 
         return intersection;
@@ -327,10 +337,11 @@ function accelerateHoriz( dir ){
     function withinCircle( point, pos ){ //if want more flexibility, can pass in a radius as well
         if (pos == null){
             pos = dude.pos;
-        }
-            diffVec = sub( pos, point );
+        } 
+
+        diffVec = sub( pos, point );
         mag = magnitude( diffVec );
-        return mag <= dude.radius;
+        return mag <= dude.radius - 1;
     }
 
     // for circular
@@ -418,7 +429,11 @@ function accelerateHoriz( dir ){
     function forAny( stuff, conditional ){
             var condition = false;
                 stuff.forEach( function( x ) { 
-                                if( conditional( x ) ) { 
+                    var temp = conditional( x )
+                            if ( temp !== true && temp !== false ){
+                                alert( "AAAH! (For Any pass a function that did not return true or false.)" );
+                            }
+                                if( temp ) { 
                                     condition = true 
                                 } 
                             } )
