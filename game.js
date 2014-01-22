@@ -11,7 +11,7 @@ var BOARD_SIZE_Y          = 14 //floor( screenHeight / TILE_SIZE );
 var MAX_SPEED             = 10
 var HORIZ_ACCEL           = 1
 var GRAVITY               = 3 // must be >= 2
-var JUMP_SPEED            = -70
+var JUMP_SPEED            = -50
 
 var pi                    = 3.14159265359
 // colors
@@ -24,6 +24,8 @@ var cyan = makeColor( 0, 0.7, 0.7, 1)
 var white = makeColor(1, 1, 1, 1);
 var black = makeColor(0, 0, 0, 1);
 var gray = makeColor(0.7,0.7,0.7);
+
+var DUDE_COLOR = cyan;
 
 var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "X___________________X",
@@ -42,10 +44,11 @@ var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
 
 // images
 
-var NSPIKE = loadImage( "nSpike.png");
-var ESPIKE = loadImage( "eSpike.png");
-var SSPIKE = loadImage( "sSpike.png");
-var WSPIKE = loadImage( "wSpike.png");
+var NSPIKES = loadImage( "nSpikes.png");
+var ESPIKES = loadImage( "eSpikes.png");
+var SSPIKES = loadImage( "sSpikes.png");
+var WSPIKES = loadImage( "wSpikes.png");
+
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                     MUTABLE STATE                         //
@@ -57,7 +60,10 @@ var rightDown = false;
 var horiz_velocity = 0;
 var vert_velocity = 0;
 var nextPos;
-var debugShapes = []
+var debugShapes = [];
+var spikes = [];
+var dead = false;
+var deathTime;
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -71,9 +77,7 @@ function onSetup() {
 
     makeBoard();
 
-    dude = makeDude( board[7][3].center.x, board[7][3].center.y, TILE_SIZE/2, cyan );
-
-    //board[7][BOARD_SIZE_Y-3].center.x, board[7][BOARD_SIZE_Y-3].center.y, cyan );
+    dude = makeDude( board[7][3].center.x, board[7][3].center.y, TILE_SIZE/2, DUDE_COLOR );
 
     goal = new Object();
         goal.pos = new vec2( board[4][12].center.x, board[4][12].center.y );
@@ -83,24 +87,20 @@ function onSetup() {
 
 // When a key is pushed
 function onKeyStart(key) {    
-    if ( key == 37 ){ // left arrow
-        leftDown = true;
-    } else if ( key == 39 ){ // right arrow
-        rightDown = true;
-    } else if ( key == 70 ){ // 'f' key
-        if ( vert_velocity == 0 ){
-            vert_velocity = JUMP_SPEED;
-        } // checks for double jumps
-    } else if ( key == 32 ){ // spacebar
-        JUMP_SPEED = JUMP_SPEED * -1
-        GRAVITY = GRAVITY * -1
+    if ( !dead ){
+        if ( key == 37 ){ // left arrow
+            leftDown = true;
+        } else if ( key == 39 ){ // right arrow
+            rightDown = true;
+        } else if ( key == 70 ){ // 'f' key
+            if ( vert_velocity == 0 ){
+                vert_velocity = JUMP_SPEED;
+            } // checks for double jumps
+        } else if ( key == 32 ){ // spacebar
+            JUMP_SPEED = JUMP_SPEED * -1
+            GRAVITY = GRAVITY * -1
+        }
     }
-}
-
-// USE TO FIND COORDS ON THE SCREEN
-
-function onClick( x, y ){
-    console.log( x.toString() + ", " + y.toString())
 }
 
 function onKeyEnd(key) {
@@ -109,6 +109,12 @@ function onKeyEnd(key) {
         rightDown = false;
         horiz_velocity = 0;
     }
+}
+
+// USE TO FIND COORDS ON THE SCREEN
+
+function onClick( x, y ){
+    console.log( x.toString() + ", " + y.toString())
 }
 
 // Called 30 times or more per second
@@ -125,12 +131,6 @@ function render() {
 
     // Draw a white background where the board is
     fillRectangle( board[0][0].corner.x, board[0][0].corner.y, TILE_SIZE * BOARD_SIZE_X, TILE_SIZE * BOARD_SIZE_Y, white );
-
-    // dots on edges of a square
-    /*blockSides = pointsOnSquare( board[2][12].corner, TILE_SIZE, "horiz" );
-    for (var i=0; i<blockSides.length; i++){
-        fillCircle( blockSides[i].x, blockSides[i].y, 10, red )
-    }*/
     
     // draw the board, grid lines, walls
     for ( var x = 0; x < BOARD_SIZE_X; x++ ){
@@ -148,15 +148,43 @@ function render() {
     // draw the goal
     drawGoal();
 
-    // draw the player
-    drawDude();
+
 
     // draw any debugging shapes
     debugDraw();
+
+    // draw some spikes
+    drawImageInTile( NSPIKES, board[10][12] );
+    drawImageInTile( NSPIKES, board[11][12] );
+    drawImageInTile( NSPIKES, board[12][12] );
+    drawImageInTile( NSPIKES, board[13][12] );
+
+    drawImageInTile( SSPIKES, board[10][5] );
+    drawImageInTile( SSPIKES, board[11][5] );
+    drawImageInTile( SSPIKES, board[12][5] );
+
+    board[10][12].spikes = true;
+    board[11][12].spikes = true;
+    board[12][12].spikes = true;
+    board[13][12].spikes = true;
+    board[10][5].spikes = true;
+    board[11][5].spikes = true;
+    board[12][5].spikes = true;
+
+    spikes = [];
+        for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
+            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
+                if ( board[x][y].spikes == true ){
+                    insertBack( spikes, board[x][y] );
+                }
+            }
+        }
+    
+    // draw the player
+    drawDude();
 }
 
 function simulate(){
-
 
     if ( leftDown == true ){
         moveHoriz( "left" );    
@@ -167,8 +195,29 @@ function simulate(){
 
     moveVert();
 
+    // check if dude is in the goal; if so, win
     if ( checkIntersection( getTile( goal.pos ), dude.pos, "all", 10 ) ){
         beatLevel();
+    }
+
+    // check if the dude is in spikes; if so, die
+    inSpikes = forAny( spikes, checkIntersection );
+    if ( inSpikes ){
+        death();
+    }
+
+    // things to do when the character is dead
+    if ( dead ){
+        timeSinceDeath = currentTime() - deathTime
+        leftDown = false;
+        rightDown = false;
+
+        if ( timeSinceDeath > 1 && timeSinceDeath < 1.5 ){
+            // disappear
+            setPos( dude, new vec2( -100, -100 ) );
+        } else if ( timeSinceDeath > 1.5 ){
+            respawn();
+        }
     }
 }
 
@@ -242,6 +291,24 @@ function accelerateHoriz( dir ){
         dude.color = purple;
         // eventually this will increase the level counter and draw the next board
     }
+
+    // what happens when you die
+    function death(){
+        if ( !dead ){
+            console.log( "Aww snap, you died" );
+        dude.color = red;
+        dead = true;
+        deathTime = currentTime();
+        // eventually this will do more stuff;
+        }
+    }
+
+    function respawn(){
+        setPos( dude, dude.startPos );
+        dude.color = DUDE_COLOR;
+        dead = false;
+    }
+
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                      HELPER RULES                         //
@@ -251,9 +318,7 @@ function accelerateHoriz( dir ){
     // make the dude
     function makeDude( xstart, ystart, r, startcolor ){
         position = new vec2( xstart, ystart )
-        ul_corner = new vec2( xstart - TILE_SIZE/2, ystart - TILE_SIZE/2 );
-        lr_corner = new vec2( xstart + TILE_SIZE/2, ystart + TILE_SIZE/2 );
-        return { pos : position, radius : r, color : startcolor, upperLeft : ul_corner, lowerRight : lr_corner };
+        return { pos : position, startPos : position, radius : r, color : startcolor };
     }
 
     // draw the dude
@@ -268,7 +333,7 @@ function accelerateHoriz( dir ){
 
     function debugDraw(){
         for (var i = 0; i<debugShapes.length; i++){
-            fillCircle( debugShapes[i].x, debugShapes[i].y, 5, red );
+            fillCircle( debugShapes[i].x, debugShapes[i].y, 20, red );
         }
     }
 
@@ -299,6 +364,8 @@ function accelerateHoriz( dir ){
 
                 tile.coords = new vec2( x, y );
 
+                tile.spikes = false;
+
                 if ( substring( mapStrings[y], x, x+1 ) == "X" ){
                     tile.wall = true;
                     insertBack( walls, tile )
@@ -309,6 +376,11 @@ function accelerateHoriz( dir ){
                 board[x][y] = tile;
             }  
         }
+    }
+
+    // put an image in a tile, filling the entire tile
+    function drawImageInTile( image, tile ){
+        drawImage( image, tile.corner.x, tile.corner.y, TILE_SIZE, TILE_SIZE )
     }
 
 // MODIFYIN' STUFF
