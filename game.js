@@ -16,7 +16,7 @@ var JUMP_SPEED            = -70
 var pi                    = 3.14159265359
 // colors
 var red = makeColor(1, 0, 0, 1);
-var green = makeColor(0, .8, 0, 1);
+var green = makeColor(0.2, .7, 0.2, 1);
 var blue = makeColor(0, 0, 1, 1);
 var purple = makeColor(0.5, 0.0, 1.0, 1.0);
 var yellow = makeColor(0.5, 0.5, 0, 1)
@@ -39,6 +39,13 @@ var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "X_X______X____XXX___X",
                     "X_X______X____XXX___X",
                     "XXXXXXXXXXXXXXXXXXXXX" ]
+
+// images
+
+var NSPIKE = loadImage( "nSpike.png");
+var ESPIKE = loadImage( "eSpike.png");
+var SSPIKE = loadImage( "sSpike.png");
+var WSPIKE = loadImage( "wSpike.png");
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                     MUTABLE STATE                         //
@@ -69,7 +76,7 @@ function onSetup() {
     //board[7][BOARD_SIZE_Y-3].center.x, board[7][BOARD_SIZE_Y-3].center.y, cyan );
 
     goal = new Object();
-        goal.pos = new vec2( board[19][12].center.x, board[19][12].center.y );
+        goal.pos = new vec2( board[4][12].center.x, board[4][12].center.y );
         goal.color = green;
 }
 
@@ -138,17 +145,18 @@ function render() {
         }
     }
 
-    // draw the player
-    drawDude();
-
     // draw the goal
     drawGoal();
+
+    // draw the player
+    drawDude();
 
     // draw any debugging shapes
     debugDraw();
 }
 
 function simulate(){
+
 
     if ( leftDown == true ){
         moveHoriz( "left" );    
@@ -158,6 +166,10 @@ function simulate(){
     }
 
     moveVert();
+
+    if ( checkIntersection( getTile( goal.pos ), dude.pos, "all", 10 ) ){
+        beatLevel();
+    }
 }
 
 function accelerateHoriz( dir ){
@@ -187,7 +199,6 @@ function accelerateHoriz( dir ){
         nextPos = new vec2( dude.pos.x + horiz_velocity, dude.pos.y )
         nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos, "horiz" ) } );
             if( nextCollides ){
-
                 //insertBack( debugShapes, nextPos )
                 var curTile = getTile( dude.pos );
                 setPos( dude, vec2 ( curTile.center.x, dude.pos.y ) );
@@ -196,6 +207,7 @@ function accelerateHoriz( dir ){
             }
     }
 
+    // move vertically (i.e. apply gravity)
     function moveVert( dir ){
         vert_velocity = vert_velocity + GRAVITY;
         nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
@@ -218,11 +230,17 @@ function accelerateHoriz( dir ){
                 } else {
                     setPos( dude, nextPos );
                 }
-                //var curTile = getTile( dude.pos ); 
-                //setPos( dude, vec2( dude.pos.x, curTile.center.y ) );
             } else {
                 setPos( dude, nextPos );
             }
+    }
+
+    // what happens when you beat the level
+    function beatLevel(){
+        console.log( "Good job!" );
+
+        dude.color = purple;
+        // eventually this will increase the level counter and draw the next board
     }
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -325,69 +343,33 @@ function accelerateHoriz( dir ){
         return getTile( pos ).wall;
     }
 // check for a collision in a position
-    function checkIntersection( tile, pos, direction ){
+    function checkIntersection( tile, pos, direction, radius ){
         var tileEdges = []; 
         if ( direction == "horiz" ){
             tileEdges = pointsOnSquare( tile.corner, TILE_SIZE, "horiz" );
         } else {
             tileEdges = pointsOnSquare( tile.corner, TILE_SIZE );
         }
-        if ( pos == null){
-            intersection = forAny( tileEdges, withinCircle);            
-        } else {
-            intersection = forAny( tileEdges, function( point ){ return withinCircle( point, pos )} )
-        }
+            intersection = forAny( tileEdges, function( point ){ return withinCircle( point, pos, radius )} )
 
         return intersection;
     }
 
-    function withinCircle( point, pos ){ //if want more flexibility, can pass in a radius as well
+    // check if a given point is within a circle the size of 'dude' (either at a given position or,
+        // otherwise, centered at dude.pos)
+    function withinCircle( point, pos, radius ){
         if (pos == null){
             pos = dude.pos;
+        }
+
+        if (radius == null){
+            radius = dude.radius;
         } 
 
         diffVec = sub( pos, point );
         mag = magnitude( diffVec );
-        return mag <= dude.radius - 1;
+        return mag <= radius - 1;
     }
-
-    // for circular
-    function checkCollision( pos ){
-      var pointsArray = pointsOnCircle( pos, dude.radius );
-        collision = forAny( pointsArray, isWall );
-        return collision;
-    }
-
-
-
-
-
-
-
-// get corners!
-    // given the center of an object, get its upper left corner
-        function getUpperLeft( pos ){
-            ul_corner = new vec2( pos.x - TILE_SIZE/2, pos.y - TILE_SIZE/2 );
-            return ul_corner;
-        }
-
-    // given the center of an object, get its upper right corner
-        function getUpperRight( pos ){
-            ur_corner = new vec2( pos.x + TILE_SIZE/2, pos.y - TILE_SIZE/2 );
-            return ur_corner;
-        }
-
-    // given the center of an object, get its lower left corner
-        function getLowerLeft( pos ){
-            ll_corner = new vec2( pos.x - TILE_SIZE/2, pos.y + TILE_SIZE/2 );
-            return ll_corner;
-        }
-
-    // given the center of an object, get its lower right corner
-        function getLowerRight( pos ){
-            lr_corner = new vec2( pos.x + TILE_SIZE/2, pos.y + TILE_SIZE/2 );
-            return lr_corner;
-        }
 
 // get edges of a circle
     function pointsOnCircle( center, radius ){
@@ -405,41 +387,22 @@ function accelerateHoriz( dir ){
             return circleEdges
     }
 
-// points on square
-    /* function pointsOnSquare( corner, s ){
+    // points on a square
+    function pointsOnSquare( corner, s, direction ){ //do i really need the 'side length' param?
         var squareEdges = [];
         var nPoint, ePoint, sPoint, wPoint
         var z = 5
-        var neCorner = new vec2( corner.x + s, corner.y )
-        var seCorner = new vec2( corner.x + s, corner.y + s )
-        var swCorner = new vec2( corner.x, corner.y + s )
+        var a;
 
-        insertBack( squareEdges, corner );
-        insertBack( squareEdges, neCorner );
-        insertBack( squareEdges, seCorner );
-        insertBack( squareEdges, swCorner );
-        for (var i=1; i<z; i++){
-            nPoint = new vec2( corner.x + i * (s/z), corner.y )
-            ePoint = new vec2( neCorner.x, neCorner.y + i * (s/z) )
-            sPoint = new vec2( swCorner.x + i * (s/z), swCorner.y )
-            wPoint = new vec2( corner.x, corner.y + i * (s/z) )
-            
-            insertBack( squareEdges, nPoint );
-            insertBack( squareEdges, ePoint );
-            insertBack( squareEdges, sPoint );
-            insertBack( squareEdges, wPoint );
+        if ( direction == "horiz"){
+            a = 2;
+        } else {
+            a = 0;
         }
-            return squareEdges
-    }*/
-
-    function pointsOnSquare( corner, s, direction ){
-        var squareEdges = [];
-        var nPoint, ePoint, sPoint, wPoint
-        var z = 5
-        var nwCorner = new vec2( corner.x, corner.y + 1 )
-        var neCorner = new vec2( corner.x + s, corner.y + 1 )
-        var seCorner = new vec2( corner.x + s, corner.y - 1 + s )
-        var swCorner = new vec2( corner.x, corner.y - 1 + s )
+        var nwCorner = new vec2( corner.x, corner.y + a )
+        var neCorner = new vec2( corner.x + s, corner.y + a )
+        var seCorner = new vec2( corner.x + s, corner.y - a + s )
+        var swCorner = new vec2( corner.x, corner.y - a + s )
 
             insertBack( squareEdges, nwCorner );
             insertBack( squareEdges, neCorner );
