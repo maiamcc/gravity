@@ -1,34 +1,43 @@
 GRAVITY implementation plan
 
-1) make a grid that's accessible via array
+1) make a grid that's accessible via array = DONE
 	a) board[][] array that I can itterate through
 	b) each board tile should have .center and .corner properties so I can access its info easily
 	c) for visibility, maybe draw lines delineating tiles
-2) put stuff on the screen--walls and space
+2) put stuff on the screen--walls and space = DONE
 	a) for every tile where tile.wall = true, put a wall (fill a black rectangle)
 	b) initially, do this manually. Later, can compare to an array from a text file; if textfile array element contains X, set corresponding board array to tile.wall = true
 	c) then, make a sprite (probably just a circle to start with)
-3) sprite motion - L/R
+3) sprite motion - L/R = DONE
 	a) necessary properties: CUR_SPEED, MAX_SPEED, HORIZ_ACCEL, VERT_ACCEL
 	b) when holding L or R, move sprite linearly L or R at CUR_SPEED, where speed gets incremented every tick by HORIZ_ACCEL until it equals MAX_SPEED. On release, decrement CUR_SPEED by HORIZ_ACCEL untli CUR_SPEED = 0. HORIZ_ACCEL should be small
 		i. requires key code for L and R arrow keys
 		ii. (on tick, draw sprite at sprite.pos)
 	c) NEEDS TO NOT RUN INTO WALLS!
-3.5) don't run into walls
+3.5) don't run into walls = DONE
 	a) give sprite upper left and lower right bounds
 	b) every move (or all the time) check to see if the getTile( thessbounds ) is a wall tile. If so, DON'T MOVE (set velocity to zero? just don't set the position of the sprite?)
 			--> I left off here and it's kinda fucked up.
-	c) PROBLEM: super imprecise. Overshoots walls to the left, and undershoots to the right. Don't know what's up, bah. Need to keep moving up until the wall.
+	c) PROBLEM: super imprecise. Overshoots walls to the left, and undershoots to the right. Don't know what's up, bah. Need to keep moving up until the wall. = DONE
 4) gravity & jumping
 5) reversing gravity
 
 To do at this point:
-- reset jumping when vert_velocity = 0, i.e. no double jumps
-- more precise collision detection
+- reset jumping when vert_velocity = 0, i.e. no double jumps = DONE
+- more precise collision detection = DONE
 - start screen?
 
-6) goal point
+6) goal point = DONE
 7) level loader (populates board array from text file)
 8) next level
 9) obstacles: spikes (cause death), buttons (open locks)
+	a) tiles that set gravity a certain direction (either down or up) when you're in them
+	b) tiles that make you bounce when you stand on them/hit them
+	-----maybe a different color wall tile? Maybe a spring-sprite in the wall? (Ideally transparent so I can change the wall color)
+	c) locks / keys!
+	d) moving blocks?
+	e) extra gravity zones?
 10) bells and whistles like a start screen, timer, help text, etc.
+
+to do:
+fix spike sprite DONE

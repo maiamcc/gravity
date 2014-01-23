@@ -18,7 +18,9 @@ var pi                    = 3.14159265359
 var red = makeColor(1, 0, 0, 1);
 var green = makeColor(0.2, .7, 0.2, 1);
 var blue = makeColor(0, 0, 1, 1);
+    var transBlue = makeColor(0, 0, 1, 0.5);
 var purple = makeColor(0.5, 0.0, 1.0, 1.0);
+    var transPurple = makeColor(0.5, 0.0, 1.0, 0.5);
 var yellow = makeColor(0.5, 0.5, 0, 1)
 var cyan = makeColor( 0, 0.7, 0.7, 1)
 var white = makeColor(1, 1, 1, 1);
@@ -29,16 +31,16 @@ var DUDE_COLOR = cyan;
 
 var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "Xssss______________wX",
-                    "X______XXXX________wX",
-                    "X______S__X________wX",
-                    "X_________XXXX_____wX",
+                    "Xuuuu__XXXX________wX",
+                    "Xuuuu__S__X________wX",
+                    "Xuuuu_____XXXX_____wX",
                     "X_________sssX______X",
                     "X____________X______X",
                     "X___________________X",
                     "X___________________X",  
                     "X_G_____________X___X",
-                    "X_X______X______X___X",
-                    "X_X______X____XXX___X",
+                    "X_X______XddddddX___X",
+                    "X_X______XddddXXX___X",
                     "X_X______XnnnnXXX___X",
                     "XXXXXXXXXXXXXXXXXXXXX" ]
 
@@ -48,6 +50,8 @@ var NSPIKES = loadImage( "nSpikes.png");
 var ESPIKES = loadImage( "eSpikes.png");
 var SSPIKES = loadImage( "sSpikes.png");
 var WSPIKES = loadImage( "wSpikes.png");
+var UPARROW = loadImage( "upArrow.png");
+var DOWNARROW = loadImage( "downArrow.png");
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -62,6 +66,8 @@ var vert_velocity = 0;
 var nextPos;
 var debugShapes = [];
 var spikes = [];
+var upGrav = [];
+var downGrav = [];
 var dead = false;
 var deathTime;
 
@@ -119,7 +125,6 @@ function onKeyEnd(key) {
 }
 
 // USE TO FIND COORDS ON THE SCREEN
-
 function onClick( x, y ){
     console.log( x.toString() + ", " + y.toString())
 }
@@ -144,7 +149,7 @@ function render() {
         for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
             //if it's a wall, fill it in
             if ( board[x][y].wall == true ){
-                fillRectangle( board[x][y].corner.x, board[x][y].corner.y, TILE_SIZE, TILE_SIZE, purple );    
+                fillTile( board[x][y], purple );
             }
             
             // draw grid
@@ -155,43 +160,15 @@ function render() {
     // draw the goal
     drawGoal();
 
-
-
     // draw any debugging shapes
     debugDraw();
-
-    // draw some spikes
-    /*drawImageInTile( NSPIKES, board[10][12] );
-    drawImageInTile( NSPIKES, board[11][12] );
-    drawImageInTile( NSPIKES, board[12][12] );
-    drawImageInTile( NSPIKES, board[13][12] );
-
-    drawImageInTile( SSPIKES, board[10][5] );
-    drawImageInTile( SSPIKES, board[11][5] );
-    drawImageInTile( SSPIKES, board[12][5] );
-
-    board[10][12].spikes = true;
-    board[11][12].spikes = true;
-    board[12][12].spikes = true;
-    board[13][12].spikes = true;
-    board[10][5].spikes = true;
-    board[11][5].spikes = true;
-    board[12][5].spikes = true;
-
-    spikes = [];
-        for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
-            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
-                if ( board[x][y].spikes == true ){
-                    insertBack( spikes, board[x][y] );
-                }
-            }
-        }*/
     
     // draw the player
     drawDude();
 
-    // draw spikes
-    drawSpikes();
+    // draw & fill tiles with stuff in 'em
+    drawAllTiles();
+    fillAllTiles();
 }
 
 function simulate(){
@@ -215,6 +192,17 @@ function simulate(){
     if ( inSpikes ){
         death();
     }
+
+    // check if the dude is in up-grav square; if so, set gravity to up
+    inUpGrav = forAny( upGrav, checkIntersection );
+    inDownGrav = forAny( downGrav, checkIntersection );
+    if ( inUpGrav ){
+        GRAVITY = abs( GRAVITY ) * -1;
+    } else if ( inDownGrav ){
+        GRAVITY = abs( GRAVITY );
+    }
+    
+    
 
     // things to do when the character is dead
     if ( dead ){
@@ -346,9 +334,27 @@ function accelerateHoriz( dir ){
         }
     }
 
-    function drawSpikes(){
-        for (var i = 0; i<spikes.length; i++){
-            drawImageInTile( spikes[i].image, spikes[i] )
+    function fillTile( tile, color ){
+            fillRectangle( tile.corner.x, tile.corner.y, TILE_SIZE, TILE_SIZE, color );
+    }
+
+    function fillAllTiles(){
+        for (var i = 0; i<upGrav.length; i++){
+            fillTile( upGrav[i], transPurple );
+        }
+
+        for (var i = 0; i<downGrav.length; i++){
+            fillTile( downGrav[i], transBlue );
+        }
+    }
+
+    function drawAllTiles(){
+        for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
+            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
+                if (board[x][y].image != null){
+                    drawImageInTile( board[x][y].image, board[x][y] )
+                }
+            }
         }
     }
 
@@ -378,7 +384,6 @@ function accelerateHoriz( dir ){
 
                 tile.coords = new vec2( x, y );
 
-                tile.spikes = false;
                 tile.wall = false;
 
                 // walls, spawn, goal
@@ -394,22 +399,27 @@ function accelerateHoriz( dir ){
 
                 // spikes
                 else if ( substring( mapStrings[y], x, x+1 ) == "n" ){
-                    tile.spikes = true;
                     tile.image = NSPIKES
                     insertBack( spikes, tile );
                 } else if ( substring( mapStrings[y], x, x+1 ) == "e" ){
-                    tile.spikes = true;
                     tile.image = ESPIKES
                     insertBack( spikes, tile );
                 } else if ( substring( mapStrings[y], x, x+1 ) == "s" ){
-                    tile.spikes = true;
                     tile.image = SSPIKES
                     insertBack( spikes, tile );
                 } else if ( substring( mapStrings[y], x, x+1 ) == "w" ){
-                    tile.spikes = true;
                     tile.image = WSPIKES
                     insertBack( spikes, tile );
                 }
+
+                // gravity influence tiles
+                else if ( substring( mapStrings[y], x, x+1 ) == "u" ){
+                    tile.image = UPARROW;
+                    insertBack( upGrav, tile );
+                }  else if ( substring( mapStrings[y], x, x+1 ) == "d" ){
+                    tile.image = DOWNARROW;
+                    insertBack( downGrav, tile );
+                } //heavy grav goes here?
 
                 board[x][y] = tile;
             }  
