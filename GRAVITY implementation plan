@@ -31,7 +31,7 @@ To do at this point:
 7) level loader (populates board array from text file)
 8) next level
 9) obstacles: spikes (cause death), buttons (open locks)
-	a) tiles that set gravity a certain direction (either down or up) when you're in them
+	a) tiles that set gravity a certain direction (either down or up) when you're in them DONE
 	b) tiles that make you bounce when you stand on them/hit them
 	-----maybe a different color wall tile? Maybe a spring-sprite in the wall? (Ideally transparent so I can change the wall color)
 	c) locks / keys!
