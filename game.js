@@ -30,14 +30,14 @@ var gray = makeColor(0.7,0.7,0.7);
 var DUDE_COLOR = cyan;
 
 var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "Xssss______________wX",
+                    "Xssss___l__________wX",
                     "Xuuuu__XXXX________wX",
-                    "Xuuuu__S__X________wX",
+                    "Xuuuu__S__X_____k__wX",
                     "Xuuuu_____XXXX_____wX",
                     "X_________sssX______X",
                     "X____________X______X",
                     "X___________________X",
-                    "X___________________X",  
+                    "X_____k_____________X",  
                     "X_G_____________X___X",
                     "X_X______XddddddX___X",
                     "X_X______XddddXXX___X",
@@ -45,20 +45,23 @@ var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "XXXXXXXXXXXXXXXXXXXXX" ]
 
 // images
-
 var NSPIKES = loadImage( "nSpikes.png");
 var ESPIKES = loadImage( "eSpikes.png");
 var SSPIKES = loadImage( "sSpikes.png");
 var WSPIKES = loadImage( "wSpikes.png");
 var UPARROW = loadImage( "upArrow.png");
 var DOWNARROW = loadImage( "downArrow.png");
+var KEY = loadImage( "key.png" )
+var LOCK = loadImage( "lock.png" );
+var OPENLOCK = loadImage( "openLock.png" );
+var OPENLOCKTRANS = loadImage( "openLockTrans.png" );
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                     MUTABLE STATE                         //
 
 // TODO: DECLARE your variables here
-var lastKeyCode;
+var curTime = 0;
 var leftDown = false;
 var rightDown = false;
 var horiz_velocity = 0;
@@ -68,11 +71,17 @@ var debugShapes = [];
 var spikes = [];
 var upGrav = [];
 var downGrav = [];
+var keys = [];
+var locks = [];
+var filledWalls = [];
 var dead = false;
 var deathTime;
 
 var dude;
 var goal;
+
+var lockDraw = 100;
+
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -91,10 +100,6 @@ function onSetup() {
         goal.color = green;
 
     makeBoard();
-
-    //dude = makeDude( board[0][0].center.x, board[0][0].center.y, DUDE_COLOR );
-
-    
 }
 
 
@@ -137,38 +142,29 @@ function onTick() {
 
 function render() {
     clearScreen();
+    curTime = floor( currentTime() - START_TIME );
 
     // Draw a black background
     fillRectangle(0, 0, screenWidth, screenHeight, black );
 
     // Draw a white background where the board is
     fillRectangle( board[0][0].corner.x, board[0][0].corner.y, TILE_SIZE * BOARD_SIZE_X, TILE_SIZE * BOARD_SIZE_Y, white );
-    
-    // draw the board, grid lines, walls
-    for ( var x = 0; x < BOARD_SIZE_X; x++ ){
-        for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
-            //if it's a wall, fill it in
-            if ( board[x][y].wall == true ){
-                fillTile( board[x][y], purple );
-            }
-            
-            // draw grid
-            strokeRectangle( board[x][y].corner.x, board[x][y].corner.y, TILE_SIZE, TILE_SIZE, gray, 1 );
-        }
-    }
 
     // draw the goal
     drawGoal();
 
     // draw any debugging shapes
     debugDraw();
-    
-    // draw the player
-    drawDude();
 
     // draw & fill tiles with stuff in 'em
     drawAllTiles();
     fillAllTiles();
+
+    // draw the player
+    drawDude();
+
+    // draw grid
+    drawGrid();
 }
 
 function simulate(){
@@ -201,7 +197,17 @@ function simulate(){
     } else if ( inDownGrav ){
         GRAVITY = abs( GRAVITY );
     }
-    
+
+    if ( lockDraw > 0 ){
+        lockDraw = lockDraw - 1 ;
+    }
+
+    // check to see if dude has gotten a key
+    inKey = forAny( keys, checkIntersection );
+    if ( inKey ){
+        keyIndex = forAnyIndex( keys, checkIntersection )
+        getKey( keyIndex );
+    }
     
 
     // things to do when the character is dead
@@ -307,6 +313,14 @@ function accelerateHoriz( dir ){
         dead = false;
     }
 
+    function getKey( index ){
+        console.log( "you got a key!" )
+        locks[ index ].image = OPENLOCKTRANS;
+
+        lockWallsIndex = indexOf( walls, locks[index] )
+        removeAt( walls, lockWallsIndex)
+        keys[ index ].image = null;
+    }
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                      HELPER RULES                         //
@@ -338,21 +352,42 @@ function accelerateHoriz( dir ){
             fillRectangle( tile.corner.x, tile.corner.y, TILE_SIZE, TILE_SIZE, color );
     }
 
-    function fillAllTiles(){
-        for (var i = 0; i<upGrav.length; i++){
-            fillTile( upGrav[i], transPurple );
-        }
-
-        for (var i = 0; i<downGrav.length; i++){
-            fillTile( downGrav[i], transBlue );
+    function fillTileArray( stuff, color ){
+        for (var i = 0; i<stuff.length; i++){
+            fillTile( stuff[i], color );
         }
     }
+    function fillAllTiles(){
+        // fill walls
+        fillTileArray( filledWalls, purple );
 
+        // fill upGrav and downGrav
+        fillTileArray( upGrav, transPurple );
+        fillTileArray( downGrav, transBlue );
+    }
+
+    function drawGrid(){
+        for ( var x = 0; x < BOARD_SIZE_X; x++ ){
+            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
+                strokeRectangle( board[x][y].corner.x, board[x][y].corner.y, TILE_SIZE, TILE_SIZE, gray, 1 );
+            }
+        }
+    }
     function drawAllTiles(){
         for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
             for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
                 if (board[x][y].image != null){
+                    if ( board[x][y].image == OPENLOCKTRANS ){
+                        for ( var i = 0; i < lockDraw; i++ ){
+                            drawImageInTile( board[x][y].image, board[x][y] )    
+                        }
+                        if ( lockDraw == 0 ){
+                            lockDraw = 100;
+                            board[x][y].image = null;
+                        }
+                    } else {
                     drawImageInTile( board[x][y].image, board[x][y] )
+                    }
                 }
             }
         }
@@ -390,6 +425,7 @@ function accelerateHoriz( dir ){
                 if ( substring( mapStrings[y], x, x+1 ) == "X" ){
                     tile.wall = true;
                     insertBack( walls, tile )
+                    insertBack( filledWalls, tile )
                 } else if ( substring( mapStrings[y], x, x+1 ) == "G" ){
                     goal.pos = tile.center;
                 } else if ( substring( mapStrings[y], x, x+1 ) == "S" ){
@@ -420,6 +456,17 @@ function accelerateHoriz( dir ){
                     tile.image = DOWNARROW;
                     insertBack( downGrav, tile );
                 } //heavy grav goes here?
+
+                //keys and locks
+                else if ( substring( mapStrings[y], x, x+1 ) == "k" ){
+                    tile.image = KEY;
+                    insertBack( keys, tile );
+                }  else if ( substring( mapStrings[y], x, x+1 ) == "l" ){
+                    tile.wall = true;
+                    insertBack( walls, tile )
+                    tile.image = LOCK;
+                    insertBack( locks, tile );                    
+                }
 
                 board[x][y] = tile;
             }  
@@ -492,6 +539,7 @@ function accelerateHoriz( dir ){
     }
 
 // get edges of a circle
+// this funct. probs unnecessary at this point
     function pointsOnCircle( center, radius ){
         var circleEdges = [];
         var theta;
@@ -529,10 +577,6 @@ function accelerateHoriz( dir ){
             insertBack( squareEdges, seCorner );
             insertBack( squareEdges, swCorner );
 
-            /*insertBack( debugShapes, nwCorner );
-            insertBack( debugShapes, neCorner );
-            insertBack( debugShapes, seCorner );
-            insertBack( debugShapes, swCorner );*/
         for (var i=1; i<z; i++){
             
             ePoint = new vec2( neCorner.x, neCorner.y + i * (s/z) )
@@ -556,11 +600,26 @@ function accelerateHoriz( dir ){
                 stuff.forEach( function( x ) { 
                     var temp = conditional( x )
                             if ( temp !== true && temp !== false ){
-                                alert( "AAAH! (For Any pass a function that did not return true or false.)" );
+                                alert( "AAAH! (forAny passed a function that did not return true or false.)" );
                             }
                                 if( temp ) { 
                                     condition = true 
                                 } 
                             } )
             return condition;
+    }
+
+    function forAnyIndex( stuff, conditional ){
+        var condition = false;
+        var thisIndex;
+            for ( var i = 0; i < stuff.length; i++ ){
+                var temp = conditional( stuff[i] )
+                        if ( temp !== true && temp !== false ){
+                            alert( "AAAH! (forAnyIndex passed a function that did not return true or false.)" );
+                        } else if( temp ) { 
+                            condition = true
+                            thisIndex = i;    
+                        }
+            }   
+        return thisIndex;
     }
