@@ -28,18 +28,18 @@ var gray = makeColor(0.7,0.7,0.7);
 var DUDE_COLOR = cyan;
 
 var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "X___________________X",
-                    "X______XXXX_________X",
-                    "X_________X_________X",
-                    "X_________XXXX______X",
-                    "X____________X______X",
+                    "Xssss______________wX",
+                    "X______XXXX________wX",
+                    "X______S__X________wX",
+                    "X_________XXXX_____wX",
+                    "X_________sssX______X",
                     "X____________X______X",
                     "X___________________X",
                     "X___________________X",  
-                    "X_______________X___X",
+                    "X_G_____________X___X",
                     "X_X______X______X___X",
                     "X_X______X____XXX___X",
-                    "X_X______X____XXX___X",
+                    "X_X______XnnnnXXX___X",
                     "XXXXXXXXXXXXXXXXXXXXX" ]
 
 // images
@@ -65,6 +65,9 @@ var spikes = [];
 var dead = false;
 var deathTime;
 
+var dude;
+var goal;
+
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                      EVENT RULES                          //
@@ -75,13 +78,17 @@ function onSetup() {
     // TODO: INITIALIZE your variables here
     lastKeyCode = 0;
 
-    makeBoard();
-
-    dude = makeDude( board[7][3].center.x, board[7][3].center.y, TILE_SIZE/2, DUDE_COLOR );
+    dude = makeDude( 0, 0, DUDE_COLOR );
 
     goal = new Object();
-        goal.pos = new vec2( board[4][12].center.x, board[4][12].center.y );
+        goal.pos = new vec2( 0, 0 );
         goal.color = green;
+
+    makeBoard();
+
+    //dude = makeDude( board[0][0].center.x, board[0][0].center.y, DUDE_COLOR );
+
+    
 }
 
 
@@ -154,7 +161,7 @@ function render() {
     debugDraw();
 
     // draw some spikes
-    drawImageInTile( NSPIKES, board[10][12] );
+    /*drawImageInTile( NSPIKES, board[10][12] );
     drawImageInTile( NSPIKES, board[11][12] );
     drawImageInTile( NSPIKES, board[12][12] );
     drawImageInTile( NSPIKES, board[13][12] );
@@ -178,10 +185,13 @@ function render() {
                     insertBack( spikes, board[x][y] );
                 }
             }
-        }
+        }*/
     
     // draw the player
     drawDude();
+
+    // draw spikes
+    drawSpikes();
 }
 
 function simulate(){
@@ -316,15 +326,14 @@ function accelerateHoriz( dir ){
 // MAKIN' STUFF
 
     // make the dude
-    function makeDude( xstart, ystart, r, startcolor ){
+    function makeDude( xstart, ystart, startcolor ){
         position = new vec2( xstart, ystart )
-        return { pos : position, startPos : position, radius : r, color : startcolor };
+        return { pos : position, startPos : position, radius : TILE_SIZE/2, color : startcolor };
     }
 
     // draw the dude
     function drawDude(){
         fillCircle( dude.pos.x, dude.pos.y, dude.radius, dude.color );
-        //fillRectangle( dude.pos.x - TILE_SIZE/2, dude.pos.y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE, dude.color );
     }
 
     function drawGoal(){
@@ -337,6 +346,11 @@ function accelerateHoriz( dir ){
         }
     }
 
+    function drawSpikes(){
+        for (var i = 0; i<spikes.length; i++){
+            drawImageInTile( spikes[i].image, spikes[i] )
+        }
+    }
 
     // make the board
     function makeBoard(){
@@ -365,14 +379,38 @@ function accelerateHoriz( dir ){
                 tile.coords = new vec2( x, y );
 
                 tile.spikes = false;
+                tile.wall = false;
 
+                // walls, spawn, goal
                 if ( substring( mapStrings[y], x, x+1 ) == "X" ){
                     tile.wall = true;
                     insertBack( walls, tile )
-                } else {
-                    tile.wall = false;
+                } else if ( substring( mapStrings[y], x, x+1 ) == "G" ){
+                    goal.pos = tile.center;
+                } else if ( substring( mapStrings[y], x, x+1 ) == "S" ){
+                    dude.startPos = tile.center;
+                    dude.pos = tile.center;
+                } 
+
+                // spikes
+                else if ( substring( mapStrings[y], x, x+1 ) == "n" ){
+                    tile.spikes = true;
+                    tile.image = NSPIKES
+                    insertBack( spikes, tile );
+                } else if ( substring( mapStrings[y], x, x+1 ) == "e" ){
+                    tile.spikes = true;
+                    tile.image = ESPIKES
+                    insertBack( spikes, tile );
+                } else if ( substring( mapStrings[y], x, x+1 ) == "s" ){
+                    tile.spikes = true;
+                    tile.image = SSPIKES
+                    insertBack( spikes, tile );
+                } else if ( substring( mapStrings[y], x, x+1 ) == "w" ){
+                    tile.spikes = true;
+                    tile.image = WSPIKES
+                    insertBack( spikes, tile );
                 }
-                
+
                 board[x][y] = tile;
             }  
         }
