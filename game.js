@@ -30,9 +30,9 @@ var gray = makeColor(0.7,0.7,0.7);
 var DUDE_COLOR = cyan;
 
 var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "Xssss___a__________wX",
-                    "Xuuuu__XXXX________wX",
-                    "Xuuuu__S__X_____B__wX",
+                    "Xssss________a_____wX",
+                    "Xuuuu__XXXX__a_____wX",
+                    "Xuuuu__S__X__a__B__wX",
                     "Xuuuu_____XXXX_____wX",
                     "X_________sssX______X",
                     "X____________X______X",
@@ -72,8 +72,8 @@ var spikes = [];
 var upGrav = [];
 var downGrav = [];
 var keys = [];
-var locks = [];
 var filledWalls = [];
+var allLocks = [];
 var dead = false;
 var levelComplete = false;
 var deathTime;
@@ -218,9 +218,9 @@ function simulate(){
     }
     
     // once a key has been gotten, can decrement lockDraw to fade out the lock
-        for ( var i = 0; i<locks.length; i++){
-            if ( !locks[i].active && locks[i].lockDraw > 0 ){
-                locks[i].lockDraw = locks[i].lockDraw - 1 ;
+        for ( var i = 0; i<allLocks.length; i++){
+            if ( !allLocks[i].active && allLocks[i].lockDraw > 0 ){
+                allLocks[i].lockDraw = allLocks[i].lockDraw - 1 ;
             }
         }
 
@@ -330,14 +330,19 @@ function accelerateHoriz( dir ){
     }
 
     function getKey( index ){
-        console.log( "you got a key!" )
-        locks[ index ].image = OPENLOCKTRANS;
-
-        lockWallsIndex = indexOf( walls, locks[index] )
-        removeAt( walls, lockWallsIndex)
+        console.log( "you got a key!" );
         keys[ index ].image = null;
         keys[ index ].active = false;
-        locks[ index ].active = false;
+        //forEach( locks[ index ], openLock );
+        locks[ index ].forEach( openLock )
+    }
+
+    // opening a single tile of lock; will then be applied to each square of a macro-lock
+    function openLock( tile ){
+        tile.active = false;
+        tile.image = OPENLOCKTRANS;
+        lockWallsIndex = indexOf( walls, tile )
+        removeAt( walls, lockWallsIndex )
     }
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -415,7 +420,12 @@ function accelerateHoriz( dir ){
      // Create an array of columns
         board = [];
         walls = [];
-        lockKeyIndexes = [ "a", "b", "c" ]
+        lockKeyIndexes = [ "a", "b", "c" ];
+        locks0 = [];
+        locks1 = [];
+        locks2 = [];
+        locks = [ locks0, locks1, locks2 ];
+
 
         for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
             
@@ -494,8 +504,11 @@ function accelerateHoriz( dir ){
                     tile.image = LOCK;
                     tile.active = true;
                     tile.lockDraw = 100;
+                    
                     insertionIndex = indexOf( lockKeyIndexes, mapElement );
-                    insertAt( locks, insertionIndex, tile );                 
+                    insertBack( locks[ insertionIndex ], tile ); 
+
+                    insertBack( allLocks, tile )               
                 }
 
                 board[x][y] = tile;
