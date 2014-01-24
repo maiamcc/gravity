@@ -44,10 +44,10 @@ fix spike sprite DONE
 
 
 Today:
-1) locks and keys (lowercase/cap letters, lock-squares get put in an array within the array of locks)
-2) gravity dir indicator on the side of the screen
-2.5) grav up and grav down keys? a boolean reflecting direction of gravity?
-3) text on top of levels (include as the last element in mapStrings?)
-4) levelCounter (display on screen), beatLevel() and nextLevel() functions
+1) locks and keys (lowercase/cap letters, lock-squares get put in an array within the array of locks) = DONE!
+2) gravity dir indicator on the side of the screen = DONE!
+2.5) grav up and grav down keys? a boolean reflecting direction of gravity? = DONE!
+3) text on top of levels (include as the last element in mapStrings?) = DONE!
+4) levelCounter (display on screen), beatLevel() and nextLevel() functions = DONE!
 
 later -- sounds??

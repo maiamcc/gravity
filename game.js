@@ -14,6 +14,7 @@ var GRAVITY               = 3 // must be >= 2
 var JUMP_SPEED            = -50
 
 var pi                    = 3.14159265359
+
 // colors
 var red = makeColor(1, 0, 0, 1);
 var green = makeColor(0.2, .7, 0.2, 1);
@@ -29,20 +30,71 @@ var gray = makeColor(0.7,0.7,0.7);
 
 var DUDE_COLOR = cyan;
 
-var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
+var level0      = [ "XXXXXXXXXXXXXXXXXXXXX",
+                    "X___________________X",
+                    "X__S________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",  
+                    "X___________X_______X",
+                    "X___________X_______X",
+                    "X___________X_______X",
+                    "X___________X___G___X",
+                    "XXXXXXXXXXXXXXXXXXXXX",
+                    "This should be easy! ('F' to jump.)" ]
+
+var level1      = [ "XXXXXXXXXXXXXXXXXXXXX",
+                    "X___________________X",
+                    "X___X_______________X",
+                    "X_S_X_______________X",
+                    "XXXXX_______________X",
+                    "X___________________X",
+                    "X___XXXXXX__________X",
+                    "X________XnnnX______X",
+                    "X________XXXXX______X",  
+                    "XG__________________X",
+                    "X___________________X",
+                    "X___X_______Xe______X",
+                    "XnnnX_______Xe______X",
+                    "XXXXXXXXXXXXXXXXXXXXX",
+                    "Those look painful!" ]
+
+var level2      = [ "XXXXXXXXXXXXXXXXXXXXX",
+                    "X___________X______GX",
+                    "X___________X_______X",
+                    "X___________X_______X",
+                    "X___________X__XXXXXX",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",  
+                    "X___________________X",
+                    "X__S________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "XXXXXXXXXXXXXXXXXXXXX",
+                    "How will I get all the way up there?" ]                                        
+
+var level3      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "Xssss________a_____wX",
                     "Xuuuu__XXXX__a_____wX",
-                    "Xuuuu__S__X__a__B__wX",
-                    "Xuuuu_____XXXX_____wX",
+                    "Xuu____S__X__a__B__wX",
+                    "Xuu_A_____XXXX_____wX",
                     "X_________sssX______X",
                     "X____________X______X",
                     "X___________________X",
-                    "X_____A_____________X",  
+                    "X___________________X",  
                     "X_______________X___X",
-                    "XbX______X______X___X",
-                    "X_X______X____XXX___X",
-                    "XGX______XnnnnXXX___X",
-                    "XXXXXXXXXXXXXXXXXXXXX" ]
+                    "XbXddd___X______X___X",
+                    "X_Xddd___X____XXX___X",
+                    "XGXddd___XnnnnXXX___X",
+                    "XXXXXXXXXXXXXXXXXXXXX",
+                    "Getting trickier now..." ]
+
+var allMaps = [ level0, level1, level2, level3 ];
 
 // images
 var NSPIKES = loadImage( "nSpikes.png");
@@ -60,28 +112,50 @@ var OPENLOCKTRANS = loadImage( "openLockTrans.png" );
 //                                                           //
 //                     MUTABLE STATE                         //
 
-// TODO: DECLARE your variables here
-var curTime = 0;
+// board variables
+    var board = [];
+    var walls = [];
+    var locks0 = [];
+    var locks1 = [];
+    var locks2 = [];
+    var locks = [ locks0, locks1, locks2 ];
+    var spikes = [];
+    var upGrav = [];
+    var downGrav = [];
+    var keys = [];
+    var filledWalls = [];
+    var allLocks = [];
+
+    var boardMessage;
+    var happyMessage;
+    var sadMessage;
+
+    var debugShapes = [];
+
+    var dude;
+    var goal;
+
+// game state variables
 var leftDown = false;
 var rightDown = false;
-var horiz_velocity = 0;
-var vert_velocity = 0;
-var nextPos;
-var debugShapes = [];
-var spikes = [];
-var upGrav = [];
-var downGrav = [];
-var keys = [];
-var filledWalls = [];
-var allLocks = [];
 var dead = false;
 var levelComplete = false;
+var level_counter = 0;
+var gravityDown = true;
+
+// movement variables
+
+
+var horiz_velocity = 0;
+var vert_velocity = 0;
+var grav_accel = GRAVITY;
+var jumping;
+var nextPos;
+
+
+// time variables
+var curTime = 0;
 var deathTime;
-
-var dude;
-var goal;
-
-var lockDraw = 100;
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -90,15 +164,13 @@ var lockDraw = 100;
 
 // When setup happens...
 function onSetup() {
-    // TODO: INITIALIZE your variables here
-    lastKeyCode = 0;
-
     dude = makeDude( 0, 0, DUDE_COLOR );
 
     goal = new Object();
         goal.pos = new vec2( 0, 0 );
         goal.color = green;
 
+    clearBoard();
     makeBoard();
     levelComplete = false;
 }
@@ -106,18 +178,21 @@ function onSetup() {
 
 // When a key is pushed
 function onKeyStart(key) {    
-    if ( !dead ){
+    if ( !dead && !levelComplete ){
         if ( key == 37 ){ // left arrow
             leftDown = true;
         } else if ( key == 39 ){ // right arrow
             rightDown = true;
         } else if ( key == 70 ){ // 'f' key
-            if ( vert_velocity == 0 ){
-                vert_velocity = JUMP_SPEED;
-            } // checks for double jumps
+            if ( vert_velocity == 0 ){ // checks for double jumps
+                vert_velocity = jumping;
+            }
         } else if ( key == 32 ){ // spacebar
-            JUMP_SPEED = JUMP_SPEED * -1
-            GRAVITY = GRAVITY * -1
+            gravityDown = !gravityDown
+        } else if ( key == 38 ){ // up arrow
+            gravityDown = false;
+        } else if ( key == 40 ){ // down arrow
+            gravityDown = true;
         }
     }
 }
@@ -128,11 +203,6 @@ function onKeyEnd(key) {
         rightDown = false;
         horiz_velocity = 0;
     }
-}
-
-// USE TO FIND COORDS ON THE SCREEN
-function onClick( x, y ){
-    console.log( x.toString() + ", " + y.toString())
 }
 
 // Called 30 times or more per second
@@ -164,11 +234,31 @@ function render() {
     // draw the player
     drawDude();
 
-    // draw grid
+    // draw gravity indicator
+    drawGravIndicator();
+
+    // draw grid (should be last thing, except for text)
     drawGrid();
+
+    // text on the board (level counter and board message)
+    drawBoardText();
+
+
+
 }
 
 function simulate(){
+
+    happyMessage = null;
+    sadMessage = null;
+
+    if ( gravityDown ){
+        jumping = JUMP_SPEED
+        grav_accel = GRAVITY
+    } else {
+        jumping = JUMP_SPEED * -1
+        grav_accel = GRAVITY * -1
+    }
 
     if ( leftDown == true ){
         moveHoriz( "left" );    
@@ -184,16 +274,9 @@ function simulate(){
         beatLevel();
     }
 
-    // debug goal:
-    /*goalEdges = pointsOnSquare( getTile( goal.pos ).corner, "all" );
-    for (var i = 0; i<goalEdges.length; i++){
-        insertBack( debugShapes, goalEdges[i] );
-    }*/
-
-    //console.log( checkIntersection( getTile( goal.pos ), dude.pos, "all", 10 ) );
     // check if the dude is in spikes; if so, die
     inSpikes = forAny( spikes, checkIntersection );
-    if ( inSpikes ){
+    if ( inSpikes && !levelComplete){
         death();
     }
 
@@ -201,12 +284,10 @@ function simulate(){
     inUpGrav = forAny( upGrav, checkIntersection );
     inDownGrav = forAny( downGrav, checkIntersection );
     if ( inUpGrav ){
-        GRAVITY = abs( GRAVITY ) * -1;
+        gravityDown = false;
     } else if ( inDownGrav ){
-        GRAVITY = abs( GRAVITY );
+        gravityDown = true;
     }
-
-    
 
     // check to see if dude has gotten a key
     inKey = forAny( keys, checkIntersection );
@@ -226,15 +307,35 @@ function simulate(){
 
     // things to do when the character is dead
     if ( dead ){
-        timeSinceDeath = currentTime() - deathTime
+        timeSinceDeath = currentTime() - deathTime;
         leftDown = false;
         rightDown = false;
+
+        if ( timeSinceDeath > 0 && timeSinceDeath < 1.5 ){
+            // sad message
+            sadMessage = "Oh noes, you died! =( "
+        }
 
         if ( timeSinceDeath > 1 && timeSinceDeath < 1.5 ){
             // disappear
             setPos( dude, new vec2( -100, -100 ) );
+            sadMessage = "Oh noes, you died! =( "
         } else if ( timeSinceDeath > 1.5 ){
             respawn();
+        }
+    }
+
+    // handles making the next level
+    if ( levelComplete ){
+        timeSinceWin = currentTime() - winTime;
+        leftDown = false;
+        rightDown = false;
+
+        if ( timeSinceWin > 0 && timeSinceWin < 1.5 ){
+            // happy message
+            happyMessage = "GREAT JOB!";
+        } else if ( timeSinceWin > 1.5 ){
+            nextLevel();
         }
     }
 }
@@ -275,7 +376,7 @@ function accelerateHoriz( dir ){
 
     // move vertically (i.e. apply gravity)
     function moveVert( dir ){
-        vert_velocity = vert_velocity + GRAVITY;
+        vert_velocity = vert_velocity + grav_accel;
         nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
         nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
 
@@ -302,16 +403,20 @@ function accelerateHoriz( dir ){
 
     // what happens when you beat the level
     function beatLevel(){
-        if ( !levelComplete ){
-            
+        if ( !levelComplete && !dead ){        
             dude.color = purple;
             levelComplete = true;
+            winTime = currentTime();
+            level_counter++
         }
 
         console.log( "Good job!" );
         // eventually this will increase the level counter and draw the next board
     }
 
+    function nextLevel(){
+        reset();
+    }
     // what happens when you die
     function death(){
         if ( !dead ){
@@ -333,8 +438,7 @@ function accelerateHoriz( dir ){
         console.log( "you got a key!" );
         keys[ index ].image = null;
         keys[ index ].active = false;
-        //forEach( locks[ index ], openLock );
-        locks[ index ].forEach( openLock )
+        locks[ index ].forEach( openLock );
     }
 
     // opening a single tile of lock; will then be applied to each square of a macro-lock
@@ -363,6 +467,46 @@ function accelerateHoriz( dir ){
 
     function drawGoal(){
         fillRectangle( goal.pos.x - TILE_SIZE/2, goal.pos.y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE, goal.color );
+    }
+
+    function drawBoardText(){
+        // level counter
+        fillText("LEVEL " + level_counter.toString(),
+             board[ 0 ][ BOARD_SIZE_Y -1 ].center.x,
+             board[ 0 ][ BOARD_SIZE_Y -1 ].center.y,             
+             black, 
+             "55px Arial Black", 
+             "left", 
+             "middle");
+
+        // board message
+        fillText( boardMessage,
+             board[ 0 ][ 0 ].center.x,
+             board[ 0 ][ 0 ].center.y,             
+             black, 
+             "55px Arial Black", 
+             "left", 
+             "middle");
+
+        if ( happyMessage != null ){
+            fillText( happyMessage,
+                BOARD_SIZE_X * TILE_SIZE / 2,
+                BOARD_SIZE_Y * TILE_SIZE / 2,             
+                green, 
+                "100px Arial Black", 
+                "center", 
+                "middle");
+            }
+
+        if ( sadMessage != null ){
+            fillText( sadMessage,
+                BOARD_SIZE_X * TILE_SIZE / 2,
+                BOARD_SIZE_Y * TILE_SIZE / 2,             
+                red, 
+                "100px Arial Black", 
+                "center", 
+                "middle");
+        }
     }
 
     function debugDraw(){
@@ -396,6 +540,15 @@ function accelerateHoriz( dir ){
             }
         }
     }
+
+    function drawGravIndicator(){
+        if ( gravityDown ){
+            drawImageInTile( DOWNARROW, board[ BOARD_SIZE_X - 1 ][0] );
+        } else {
+            drawImageInTile( UPARROW, board[ BOARD_SIZE_X - 1 ][0] );
+        }
+    }
+
     function drawAllTiles(){
         for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
             for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
@@ -418,14 +571,9 @@ function accelerateHoriz( dir ){
     // make the board
     function makeBoard(){
      // Create an array of columns
-        board = [];
-        walls = [];
         lockKeyIndexes = [ "a", "b", "c" ];
-        locks0 = [];
-        locks1 = [];
-        locks2 = [];
-        locks = [ locks0, locks1, locks2 ];
 
+        currentMap = allMaps[ level_counter ];
 
         for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
             
@@ -447,9 +595,9 @@ function accelerateHoriz( dir ){
 
                 tile.coords = new vec2( x, y );
 
-                tile.wall = false;
+                tile.wall = false; // don't need this variable?
 
-                mapElement = substring( mapStrings[y], x, x+1 )
+                mapElement = substring( currentMap[y], x, x+1 )
                 
                 // walls, spawn, goal
                 if ( mapElement == "X" ){
@@ -485,7 +633,7 @@ function accelerateHoriz( dir ){
                 }  else if ( mapElement == "d" ){
                     tile.image = DOWNARROW;
                     insertBack( downGrav, tile );
-                } //heavy grav goes here?
+                }
 
                 //keys and locks
                 else if ( mapElement == "A" || 
@@ -514,6 +662,29 @@ function accelerateHoriz( dir ){
                 board[x][y] = tile;
             }  
         }
+
+        boardMessage = currentMap[ BOARD_SIZE_Y ];
+    }
+
+    function clearBoard(){
+        /*for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
+            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
+                board[x][y] = null;
+            }
+        }*/
+
+        board = [];
+        walls = [];
+        locks0 = [];
+        locks1 = [];
+        locks2 = [];
+        locks = [ locks0, locks1, locks2 ];
+        spikes = [];
+        upGrav = [];
+        downGrav = [];
+        keys = [];
+        filledWalls = [];
+        allLocks = [];
     }
 
     // put an image in a tile, filling the entire tile
@@ -553,6 +724,8 @@ function accelerateHoriz( dir ){
         return getTile( pos ).wall;
     }
 // check for a collision in a position
+
+//CAN REMOVE RADIUS
     function checkIntersection( tile, pos, direction, radius ){
         var tileEdges = []; 
         if ( direction == "horiz" ){
@@ -567,6 +740,8 @@ function accelerateHoriz( dir ){
 
     // check if a given point is within a circle the size of 'dude' (either at a given position or,
         // otherwise, centered at dude.pos)
+
+//CAN REMOVE RADIUS
     function withinCircle( point, pos, radius ){
         if (pos == null){
             pos = dude.pos;
