@@ -30,18 +30,18 @@ var gray = makeColor(0.7,0.7,0.7);
 var DUDE_COLOR = cyan;
 
 var mapStrings = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "Xssss___l__________wX",
+                    "Xssss___a__________wX",
                     "Xuuuu__XXXX________wX",
-                    "Xuuuu__S__X_____k__wX",
+                    "Xuuuu__S__X_____B__wX",
                     "Xuuuu_____XXXX_____wX",
                     "X_________sssX______X",
                     "X____________X______X",
                     "X___________________X",
-                    "X_____k_____________X",  
-                    "X_G_____________X___X",
-                    "X_X______XddddddX___X",
-                    "X_X______XddddXXX___X",
-                    "X_X______XnnnnXXX___X",
+                    "X_____A_____________X",  
+                    "X_______________X___X",
+                    "XbX______X______X___X",
+                    "X_X______X____XXX___X",
+                    "XGX______XnnnnXXX___X",
                     "XXXXXXXXXXXXXXXXXXXXX" ]
 
 // images
@@ -75,13 +75,13 @@ var keys = [];
 var locks = [];
 var filledWalls = [];
 var dead = false;
+var levelComplete = false;
 var deathTime;
 
 var dude;
 var goal;
 
 var lockDraw = 100;
-
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -100,6 +100,7 @@ function onSetup() {
         goal.color = green;
 
     makeBoard();
+    levelComplete = false;
 }
 
 
@@ -179,10 +180,17 @@ function simulate(){
     moveVert();
 
     // check if dude is in the goal; if so, win
-    if ( checkIntersection( getTile( goal.pos ), dude.pos, "all", 10 ) ){
+    if ( checkIntersection( getTile( goal.pos ), dude.pos/*, "all"/*, 10*/ ) ){
         beatLevel();
     }
 
+    // debug goal:
+    /*goalEdges = pointsOnSquare( getTile( goal.pos ).corner, "all" );
+    for (var i = 0; i<goalEdges.length; i++){
+        insertBack( debugShapes, goalEdges[i] );
+    }*/
+
+    //console.log( checkIntersection( getTile( goal.pos ), dude.pos, "all", 10 ) );
     // check if the dude is in spikes; if so, die
     inSpikes = forAny( spikes, checkIntersection );
     if ( inSpikes ){
@@ -198,17 +206,23 @@ function simulate(){
         GRAVITY = abs( GRAVITY );
     }
 
-    if ( lockDraw > 0 ){
-        lockDraw = lockDraw - 1 ;
-    }
+    
 
     // check to see if dude has gotten a key
     inKey = forAny( keys, checkIntersection );
     if ( inKey ){
         keyIndex = forAnyIndex( keys, checkIntersection )
-        getKey( keyIndex );
+        if ( keys[ keyIndex ].active == true ){
+            getKey( keyIndex );
+        }
     }
     
+    // once a key has been gotten, can decrement lockDraw to fade out the lock
+        for ( var i = 0; i<locks.length; i++){
+            if ( !locks[i].active && locks[i].lockDraw > 0 ){
+                locks[i].lockDraw = locks[i].lockDraw - 1 ;
+            }
+        }
 
     // things to do when the character is dead
     if ( dead ){
@@ -252,7 +266,6 @@ function accelerateHoriz( dir ){
         nextPos = new vec2( dude.pos.x + horiz_velocity, dude.pos.y )
         nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos, "horiz" ) } );
             if( nextCollides ){
-                //insertBack( debugShapes, nextPos )
                 var curTile = getTile( dude.pos );
                 setPos( dude, vec2 ( curTile.center.x, dude.pos.y ) );
             } else {
@@ -267,7 +280,6 @@ function accelerateHoriz( dir ){
         nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
 
             if( nextCollides ){
-                //insertBack( debugShapes, nextPos ) 
                 vert_velocity = vert_velocity/2
                 nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
                 nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
@@ -290,9 +302,13 @@ function accelerateHoriz( dir ){
 
     // what happens when you beat the level
     function beatLevel(){
-        console.log( "Good job!" );
+        if ( !levelComplete ){
+            
+            dude.color = purple;
+            levelComplete = true;
+        }
 
-        dude.color = purple;
+        console.log( "Good job!" );
         // eventually this will increase the level counter and draw the next board
     }
 
@@ -320,6 +336,8 @@ function accelerateHoriz( dir ){
         lockWallsIndex = indexOf( walls, locks[index] )
         removeAt( walls, lockWallsIndex)
         keys[ index ].image = null;
+        keys[ index ].active = false;
+        locks[ index ].active = false;
     }
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -344,7 +362,7 @@ function accelerateHoriz( dir ){
 
     function debugDraw(){
         for (var i = 0; i<debugShapes.length; i++){
-            fillCircle( debugShapes[i].x, debugShapes[i].y, 20, red );
+            fillCircle( debugShapes[i].x, debugShapes[i].y, 5, red );
         }
     }
 
@@ -378,11 +396,10 @@ function accelerateHoriz( dir ){
             for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
                 if (board[x][y].image != null){
                     if ( board[x][y].image == OPENLOCKTRANS ){
-                        for ( var i = 0; i < lockDraw; i++ ){
+                        for ( var i = 0; i < board[x][y].lockDraw; i++ ){
                             drawImageInTile( board[x][y].image, board[x][y] )    
                         }
-                        if ( lockDraw == 0 ){
-                            lockDraw = 100;
+                        if ( board[x][y].lockDraw == 0 ){
                             board[x][y].image = null;
                         }
                     } else {
@@ -398,6 +415,7 @@ function accelerateHoriz( dir ){
      // Create an array of columns
         board = [];
         walls = [];
+        lockKeyIndexes = [ "a", "b", "c" ]
 
         for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
             
@@ -421,51 +439,63 @@ function accelerateHoriz( dir ){
 
                 tile.wall = false;
 
+                mapElement = substring( mapStrings[y], x, x+1 )
+                
                 // walls, spawn, goal
-                if ( substring( mapStrings[y], x, x+1 ) == "X" ){
+                if ( mapElement == "X" ){
                     tile.wall = true;
                     insertBack( walls, tile )
                     insertBack( filledWalls, tile )
-                } else if ( substring( mapStrings[y], x, x+1 ) == "G" ){
+                } else if ( mapElement == "G" ){
                     goal.pos = tile.center;
-                } else if ( substring( mapStrings[y], x, x+1 ) == "S" ){
+                } else if ( mapElement == "S" ){
                     dude.startPos = tile.center;
                     dude.pos = tile.center;
                 } 
 
                 // spikes
-                else if ( substring( mapStrings[y], x, x+1 ) == "n" ){
+                else if ( mapElement == "n" ){
                     tile.image = NSPIKES
                     insertBack( spikes, tile );
-                } else if ( substring( mapStrings[y], x, x+1 ) == "e" ){
+                } else if ( mapElement == "e" ){
                     tile.image = ESPIKES
                     insertBack( spikes, tile );
-                } else if ( substring( mapStrings[y], x, x+1 ) == "s" ){
+                } else if ( mapElement == "s" ){
                     tile.image = SSPIKES
                     insertBack( spikes, tile );
-                } else if ( substring( mapStrings[y], x, x+1 ) == "w" ){
+                } else if ( mapElement == "w" ){
                     tile.image = WSPIKES
                     insertBack( spikes, tile );
                 }
 
                 // gravity influence tiles
-                else if ( substring( mapStrings[y], x, x+1 ) == "u" ){
+                else if ( mapElement == "u" ){
                     tile.image = UPARROW;
                     insertBack( upGrav, tile );
-                }  else if ( substring( mapStrings[y], x, x+1 ) == "d" ){
+                }  else if ( mapElement == "d" ){
                     tile.image = DOWNARROW;
                     insertBack( downGrav, tile );
                 } //heavy grav goes here?
 
                 //keys and locks
-                else if ( substring( mapStrings[y], x, x+1 ) == "k" ){
+                else if ( mapElement == "A" || 
+                            mapElement == "B" ||
+                            mapElement == "C" ){
                     tile.image = KEY;
-                    insertBack( keys, tile );
-                }  else if ( substring( mapStrings[y], x, x+1 ) == "l" ){
+                    tile.active = true;
+                    insertionIndex = indexOf( lockKeyIndexes, mapElement.toLowerCase() );
+                    insertAt( keys, insertionIndex, tile );
+                }  else if ( mapElement == "a" || 
+                                mapElement == "b" ||
+                                mapElement == "c" ){
                     tile.wall = true;
                     insertBack( walls, tile )
+
                     tile.image = LOCK;
-                    insertBack( locks, tile );                    
+                    tile.active = true;
+                    tile.lockDraw = 100;
+                    insertionIndex = indexOf( lockKeyIndexes, mapElement );
+                    insertAt( locks, insertionIndex, tile );                 
                 }
 
                 board[x][y] = tile;
@@ -513,9 +543,9 @@ function accelerateHoriz( dir ){
     function checkIntersection( tile, pos, direction, radius ){
         var tileEdges = []; 
         if ( direction == "horiz" ){
-            tileEdges = pointsOnSquare( tile.corner, TILE_SIZE, "horiz" );
+            tileEdges = pointsOnSquare( tile.corner, "horiz" );
         } else {
-            tileEdges = pointsOnSquare( tile.corner, TILE_SIZE );
+            tileEdges = pointsOnSquare( tile.corner );
         }
             intersection = forAny( tileEdges, function( point ){ return withinCircle( point, pos, radius )} )
 
@@ -556,7 +586,7 @@ function accelerateHoriz( dir ){
     }
 
     // points on a square
-    function pointsOnSquare( corner, s, direction ){ //do i really need the 'side length' param?
+    function pointsOnSquare( corner, direction ){
         var squareEdges = [];
         var nPoint, ePoint, sPoint, wPoint
         var z = 5
@@ -568,9 +598,9 @@ function accelerateHoriz( dir ){
             a = 0;
         }
         var nwCorner = new vec2( corner.x, corner.y + a )
-        var neCorner = new vec2( corner.x + s, corner.y + a )
-        var seCorner = new vec2( corner.x + s, corner.y - a + s )
-        var swCorner = new vec2( corner.x, corner.y - a + s )
+        var neCorner = new vec2( corner.x + TILE_SIZE, corner.y + a )
+        var seCorner = new vec2( corner.x + TILE_SIZE, corner.y - a + TILE_SIZE )
+        var swCorner = new vec2( corner.x, corner.y - a + TILE_SIZE )
 
             insertBack( squareEdges, nwCorner );
             insertBack( squareEdges, neCorner );
@@ -579,14 +609,14 @@ function accelerateHoriz( dir ){
 
         for (var i=1; i<z; i++){
             
-            ePoint = new vec2( neCorner.x, neCorner.y + i * (s/z) )
-            wPoint = new vec2( corner.x, corner.y + i * (s/z) )
+            ePoint = new vec2( neCorner.x, neCorner.y + i * (TILE_SIZE/z) )
+            wPoint = new vec2( corner.x, corner.y + i * (TILE_SIZE/z) )
             insertBack( squareEdges, ePoint );
             insertBack( squareEdges, wPoint );
 
             if ( direction !== "horiz" ){
-                nPoint = new vec2( corner.x + i * (s/z), corner.y )
-                sPoint = new vec2( swCorner.x + i * (s/z), swCorner.y )
+                nPoint = new vec2( corner.x + i * (TILE_SIZE/z), corner.y )
+                sPoint = new vec2( swCorner.x + i * (TILE_SIZE/z), swCorner.y )
                 insertBack( squareEdges, nPoint );
                 insertBack( squareEdges, sPoint );
             }

@@ -41,3 +41,13 @@ To do at this point:
 
 to do:
 fix spike sprite DONE
+
+
+Today:
+1) locks and keys (lowercase/cap letters, lock-squares get put in an array within the array of locks)
+2) gravity dir indicator on the side of the screen
+2.5) grav up and grav down keys? a boolean reflecting direction of gravity?
+3) text on top of levels (include as the last element in mapStrings?)
+4) levelCounter (display on screen), beatLevel() and nextLevel() functions
+
+later -- sounds??
