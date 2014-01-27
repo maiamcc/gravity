@@ -4,13 +4,13 @@
 
 var START_TIME          = currentTime();
 
-var TILE_SIZE             = 75 // orig 90
+var TILE_SIZE             = 76 // orig 90
 var BOARD_SIZE_X          = 25 //floor( screenWidth / TILE_SIZE ); orig 21
 var BOARD_SIZE_Y          = 16 //floor( screenHeight / TILE_SIZE ); orig 14
 
-var MAX_SPEED             = 10
+var MAX_SPEED             = 8
 var HORIZ_ACCEL           = 1
-var GRAVITY               = 2.5 // must be >= 2
+var GRAVITY               = 2 // must be >= 2
 var JUMP_SPEED            = -40
 
 var pi                    = 3.14159265359
@@ -30,71 +30,65 @@ var gray = makeColor(0.7,0.7,0.7);
 
 var DUDE_COLOR = cyan;
 
-var level0 = ["XXXXXXXXXXXXXXXXXXXXXXXXX",
-"X_______________________X",
-"X__S____________________X",
-"X_______________________X",
-"X_______________________X",
-"X_______________________X",
-"X_______________________X",
-"X_______________________X",
-"X_______________________X",
-"X_______________________X",
-"X____________X__________X",
-"X______X_____X__________X",
-"X______X_____X__________X",
-"X______X_____X__________X",
-"X______X_____X______G___X",
-"XXXXXXXXXXXXXXXXXXXXXXXXX",
-"This should be easy! (L/R to move, F to jump)" ]
+// intro level
+var level0 = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X_______________________X",
+            "X__S____________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X____________X__________X",
+            "X______X_____X__________X",
+            "X______X____XX__________X",
+            "X______X____XX__________X",
+            "X______X____XX______G___X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "This should be easy! (L/R to move, F to jump)" ]
 
-var levelblah      = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "X___________________X",
-                    "X__S________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",  
-                    "X___________X_______X",
-                    "X___________X_______X",
-                    "X___________X_______X",
-                    "X___________X___G___X",
-                    "XXXXXXXXXXXXXXXXXXXXX",
-                    "This should be easy! (L/R to move, F to jump.)" ]
+// spikes intro
+var level1 = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X________wX_____________X",
+            "XS_______wX_____________X",
+            "XXXXXX___wX_____________X",
+            "X________wX_____________X",
+            "X_____XXXXX_____________X",
+            "X_______________XXX_____X",
+            "X______________XXXX_____X",
+            "X_____________XXXXX_____X",
+            "X____________XXXXXX_____X",
+            "XXXXXXX__XXXXXXXXXX____GX",
+            "X_____XnnX______________X",
+            "X_____XXXX______________X",
+            "X_______________________X",
+            "X________________nnnnnnnX",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Those look painful!" ]
 
-var level1      = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "X___________________X",
-                    "X___X_______________X",
-                    "X_S_X_______________X",
-                    "XXXXX_______________X",
-                    "X___________________X",
-                    "X___XXXXXX__________X",
-                    "X________XnnnX______X",
-                    "X________XXXXX______X",  
-                    "XG__________________X",
-                    "X___________________X",
-                    "X___X_______Xe______X",
-                    "XnnnX_______Xe______X",
-                    "XXXXXXXXXXXXXXXXXXXXX",
-                    "Those look painful!" ]
-
-var level2      = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "X___________X______GX",
-                    "X___________X_______X",
-                    "X___________X_______X",
-                    "X___________X__XXXXXX",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",  
-                    "X___________________X",
-                    "X__S________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "XXXXXXXXXXXXXXXXXXXXX",
-                    "How will I get all the way up there?" ]
+// gravity intro
+var level2      = [ 
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X_______________X______GX",
+            "X_______________X_______X",
+            "X_______________X_______X",
+            "X_______________X__XXXXXX",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X__S____________________X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "How will I get all the way up there? (Hint: spacebar!)" ]
 
 var level3      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "X______X_______X____X",
@@ -220,7 +214,6 @@ function onSetup() {
         goal.pos = new vec2( 0, 0 );
         goal.color = green;
 
-    // currentLevel++ MOVE THIS BACK
     clearBoard();
     makeBoard();
     
@@ -263,6 +256,10 @@ function onKeyEnd(key) {
     }
 }
 
+function onClick( x, y ){
+     console.log( x.toString() + ", " + y.toString())
+ }
+
 // Called 30 times or more per second
 function onTick() {
     simulate();
@@ -282,6 +279,9 @@ function render() {
     // draw the goal
     drawGoal();
 
+
+
+
     // draw any debugging shapes
     debugDraw();
 
@@ -300,18 +300,9 @@ function render() {
 
     // text on the board (level counter and board message)
     drawBoardText();
-
 }
 
 function simulate(){
-
-    // debug floors...
-
-    /*debugEdges = pointsOnSquare( board[3][23] );
-    for( var i = 0; i<debugEdges.length; i++){
-        insertBack( debugShapes, debugEdges );
-    }*/
-
 
     happyMessage = null;
     sadMessage = null;
@@ -334,7 +325,7 @@ function simulate(){
     moveVert();
 
     // check if dude is in the goal; if so, win
-    if ( checkIntersection( getTile( goal.pos ), dude.pos/*, "all"/*, 10*/ ) ){
+    if ( checkIntersection( getTile( goal.pos ), dude.pos ) ){
         beatLevel();
     }
 
@@ -399,6 +390,7 @@ function simulate(){
             // happy message
             happyMessage = "GREAT JOB!";
         } else if ( timeSinceWin > 1.5 ){
+            currentLevel++;
             nextLevel();
         }
     }
@@ -483,12 +475,10 @@ function accelerateHoriz( dir ){
         dude.color = red;
         dead = true;
         deathTime = currentTime();
-        // eventually this will do more stuff;
         }
     }
 
     function respawn(){
-        setPos( dude, dude.startPos );
         reset();
     }
 
@@ -653,13 +643,10 @@ function accelerateHoriz( dir ){
 
                 tile.coords = new vec2( x, y );
 
-                tile.wall = false; // don't need this variable?
-
                 mapElement = substring( currentMap[y], x, x+1 )
                 
                 // walls, spawn, goal
                 if ( mapElement == "X" ){
-                    tile.wall = true;
                     insertBack( walls, tile )
                     insertBack( filledWalls, tile )
                 } else if ( mapElement == "G" ){
@@ -704,7 +691,6 @@ function accelerateHoriz( dir ){
                 }  else if ( mapElement == "a" || 
                                 mapElement == "b" ||
                                 mapElement == "c" ){
-                    tile.wall = true;
                     insertBack( walls, tile )
 
                     tile.image = LOCK;
@@ -778,16 +764,14 @@ function accelerateHoriz( dir ){
     }
 
 // check for a collision in a position
-
-//CAN REMOVE RADIUS
-    function checkIntersection( tile, pos, direction, radius ){
+    function checkIntersection( tile, pos, direction ){
         var tileEdges = []; 
         if ( direction == "horiz" ){
             tileEdges = pointsOnSquare( tile.corner, "horiz" );
         } else {
             tileEdges = pointsOnSquare( tile.corner );
         }
-            intersection = forAny( tileEdges, function( point ){ return withinCircle( point, pos, radius )} )
+            intersection = forAny( tileEdges, function( point ){ return withinCircle( point, pos )} )
 
         return intersection;
     }
