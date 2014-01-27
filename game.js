@@ -11,7 +11,7 @@ var BOARD_SIZE_Y          = 16 //floor( screenHeight / TILE_SIZE ); orig 14
 var MAX_SPEED             = 8
 var HORIZ_ACCEL           = 1
 var GRAVITY               = 2 // must be >= 2
-var JUMP_SPEED            = -40
+var JUMP_SPEED            = -35
 
 var pi                    = 3.14159265359
 
@@ -43,12 +43,13 @@ var level0 = [
             "X_______________________X",
             "X_______________________X",
             "X____________X__________X",
-            "X______X_____X__________X",
+            "X____________X__________X",
             "X______X____XX__________X",
             "X______X____XX__________X",
             "X______X____XX______G___X",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
-            "This should be easy! (L/R to move, F to jump)" ]
+            "This should be easy! (L/R to move, F to jump)",
+            100 ]
 
 // spikes intro
 var level1 = [
@@ -68,7 +69,8 @@ var level1 = [
             "X_______________________X",
             "X________________nnnnnnnX",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
-            "Those look painful!" ]
+            "Those look painful!",
+            100 ]
 
 // gravity intro
 var level2      = [ 
@@ -88,23 +90,71 @@ var level2      = [
             "X_______________________X",
             "X__S____________________X",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
-            "How will I get all the way up there? (Hint: spacebar!)" ]
+            "How will I get all the way up there? (Hint: spacebar!)",
+            100 ]
 
-var level3      = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "X______X_______X____X",
-                    "X__X___X___X___X____X",
-                    "X__X___X___X___X____X",
-                    "X__X___X___X___X____X",
-                    "X__X___X___X___X____X",
-                    "XG_X_______X________X",
-                    "XXXXXXXXXXXXXXXXXX__X",
-                    "X_________X______X__X",  
-                    "X____X____X___X__X__X",
-                    "X____X____X___X__X__X",
-                    "X____X____X___X__X__X",
-                    "XS___X________X_____X",
-                    "XXXXXXXXXXXXXXXXXXXXX",
-                    "Slolam!" ]                                         
+// more practice with gravity
+var level3      = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X_________X________X____X",
+            "X_________X________X____X",
+            "X____X____X____X___X____X",
+            "X____X____X____X___X____X",
+            "X____X____X____X___X____X",
+            "X____X_________X________X",
+            "XG___X_________X________X",
+            "XXXXXXXXXXXXXXXXXXXXXX__X",
+            "X_________X________X____X",
+            "X_________X________X____X",
+            "X____X____X____X___X____X",
+            "X____X____X____X___X____X",
+            "X____X_________X________X",
+            "XS___X_________X________X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Slolam!",
+            100 ]
+
+var level4      = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "XXXXXXXXXXXXXXXXXsss___GX",
+            "XXXXXXXXXXXXXXsss_______X",
+            "XXXXXXXXXXXsss__________X",
+            "XXXXXXXXsss_____________X",
+            "XXXXXsss________________X",
+            "XXsss___________________X",
+            "X_______________________X",
+            "X_____________________nnX",
+            "X__________________nnnXXX",
+            "X______________nnnnXXXXXX",
+            "X___________nnnXXXXXXXXXX",
+            "X________nnnXXXXXXXXXXXXX",
+            "X___XXnnnXXXXXXXXXXXXXXXX",
+            "XS__XXXXXXXXXXXXXXXXXXXXX",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Now with 100% more danger!",
+            100]
+
+var level5      = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X_____XssXX_____________X",
+            "X_____X__XX_____________X",
+            "X_________X_____XXXXX___X",
+            "X_______________XG______X",
+            "X___________nnnnX_______X",
+            "X______XXXXXXXXXX_______X",
+            "X______sss______X_______X",
+            "X_______________X_______X",
+            "X_______________X_______X",
+            "XXXXX_________XXXXXXXXXXX",
+            "XXXXX___________________X",
+            "XXXXXnnX________________X",
+            "XXXXXXXXnnX_____X__S____X",
+            "XXXXXXXXXXX_____X_______X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Resources are scarce. (In an emergency, use 'esc'.)",
+            3 ]
+
+                // max shifts = 3
 
 var level8      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "Xssss________a_____wX",
@@ -138,7 +188,7 @@ var level9      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "XXXXXXXXXXXXXXXXXXXXX",
                     "blank board" ]
 
-var allMaps = [ level0, level1, level2, level3 ];
+var allMaps = [ level0, level1, level2, level3, level4, level5 ];
 
 // images
 var NSPIKES = loadImage( "nSpikes.png");
@@ -184,8 +234,9 @@ var leftDown = false;
 var rightDown = false;
 var dead = false;
 var levelComplete = false;
-var currentLevel = 0;
+var currentLevel = 5;
 var gravityDown = true;
+var shiftsRemaining = 0;
 
 // movement variables
 
@@ -208,6 +259,10 @@ var deathTime;
 
 // When setup happens... (gets called at the beginning of the game, and then at the beginning of each level)
 function onSetup() {
+    levelComplete = false;
+    dead = false;
+    gravityDown = true;
+
     dude = makeDude( 0, 0, DUDE_COLOR );
 
     goal = new Object();
@@ -217,9 +272,7 @@ function onSetup() {
     clearBoard();
     makeBoard();
     
-    levelComplete = false;
-    dead = false;
-    gravityDown = true;
+
     var horiz_velocity = 0;
     var vert_velocity = 0;
 }
@@ -237,11 +290,20 @@ function onKeyStart(key) {
                 vert_velocity = jumping;
             }
         } else if ( key == 32 ){ // spacebar
-            gravityDown = !gravityDown
+            if ( shiftsRemaining != 0 ){
+                gravityDown = !gravityDown
+                shiftsRemaining--
+            }
         } else if ( key == 38 ){ // up arrow
-            gravityDown = false;
+            if ( gravityDown && shiftsRemaining != 0 ){
+                gravityDown = false;
+                shiftsRemaining--
+            }
         } else if ( key == 40 ){ // down arrow
-            gravityDown = true;
+            if ( !gravityDown && shiftsRemaining != 0){
+                gravityDown = true;
+                shiftsRemaining--
+            }
         } else if ( key == 27 ){ // escape = kill key
             death();
         }
@@ -303,7 +365,7 @@ function render() {
 }
 
 function simulate(){
-
+    console.log( shiftsRemaining )
     happyMessage = null;
     sadMessage = null;
 
@@ -375,6 +437,7 @@ function simulate(){
             // disappear
             setPos( dude, new vec2( -100, -100 ) );
             sadMessage = "Oh noes, you died! =( "
+            gravityDown = true;
         } else if ( timeSinceDeath > 1.5 ){
             respawn();
         }
@@ -520,16 +583,43 @@ function accelerateHoriz( dir ){
     function drawBoardText(){
         // level counter
         fillText("LEVEL " + currentLevel.toString(),
-             board[ 0 ][ BOARD_SIZE_Y -1 ].center.x,
-             board[ 0 ][ BOARD_SIZE_Y -1 ].center.y,             
+             board[ 0 ][ BOARD_SIZE_Y - 1 ].center.x - TILE_SIZE/4,
+             board[ 0 ][ BOARD_SIZE_Y - 1 ].center.y,             
              black, 
-             "55px Arial Black", 
+             "45px Arial Black", 
              "left", 
              "middle");
 
+        // shift counter
+        fillText("SHIFTS REMAINING: ",
+             board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].corner.x,
+             board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
+             black, 
+             "45px Arial Black", 
+             "right", 
+             "middle");
+
+        if ( shiftsRemaining >= 0 ){
+            fillText(shiftsRemaining.toString(),
+                board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x + TILE_SIZE/4,
+                board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
+                black, 
+                "45px Arial Black", 
+                "right", 
+                "middle");
+        } else {
+            fillText( "∞",
+                board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x,
+                board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
+                black, 
+                "80px Arial Black", 
+                "center", 
+                "middle");
+        }
+
         // board message
         fillText( boardMessage,
-             board[ 0 ][ 0 ].center.x,
+             board[ 0 ][ 0 ].center.x - TILE_SIZE/4,
              board[ 0 ][ 0 ].center.y,             
              black, 
              "55px Arial Black", 
@@ -591,9 +681,9 @@ function accelerateHoriz( dir ){
 
     function drawGravIndicator(){
         if ( gravityDown ){
-            drawImageInTile( DOWNARROW, board[ BOARD_SIZE_X - 1 ][0] );
+            drawImageInTile( DOWNARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
         } else {
-            drawImageInTile( UPARROW, board[ BOARD_SIZE_X - 1 ][0] );
+            drawImageInTile( UPARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
         }
     }
 
@@ -708,15 +798,10 @@ function accelerateHoriz( dir ){
         }
 
         boardMessage = currentMap[ BOARD_SIZE_Y ];
+        shiftsRemaining = currentMap[ BOARD_SIZE_Y + 1 ];
     }
 
     function clearBoard(){
-        /*for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
-            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
-                board[x][y] = null;
-            }
-        }*/
-
         board = [];
         walls = [];
         locks0 = [];

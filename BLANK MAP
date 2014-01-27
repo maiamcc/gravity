@@ -1,0 +1,48 @@
+A XXXXXXXXXXXXXXXXXXXXXXXXX
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A X_______________________X
+A XXXXXXXXXXXXXXXXXXXXXXXXX
+BLANK MAP
+
+
+
+
+"This should be easy! (L/R to move, F to jump)"
+
+
+new dimensions: 25x16
+
+
+wall jumping
+
+resources are scarce (if you messed things up, hit 'esc')
+A XXXXXXXXXXXXXXXXXXXXXXXXX
+A X_____XssXX__X___________X
+A X_____X__XX__X__________X
+A X_________X__X__________X
+A X____________X__________X
+A X________________nnn____X
+A X______XXXXXXXXXXXXX____X
+A X______sssssssssXG______X
+A X_______________X_______X
+A X_______________X_______X
+A XXXXX___________X_______X
+A XXXXXnnX______XXXXXXXXXXX
+A XXXXXXXXnnX________S____X
+A XXXXXXXXXXXX____X_______X
+A XXXXXXXXXXXXX___X_______X
+A XXXXXXXXXXXXXXXXXXXXXXXXX
+max shifts
+
