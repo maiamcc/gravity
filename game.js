@@ -4,14 +4,14 @@
 
 var START_TIME          = currentTime();
 
-var TILE_SIZE             = 90 // orig 90
-var BOARD_SIZE_X          = 21 //floor( screenWidth / TILE_SIZE ); orig 21
-var BOARD_SIZE_Y          = 14 //floor( screenHeight / TILE_SIZE ); orig 14
+var TILE_SIZE             = 75 // orig 90
+var BOARD_SIZE_X          = 25 //floor( screenWidth / TILE_SIZE ); orig 21
+var BOARD_SIZE_Y          = 16 //floor( screenHeight / TILE_SIZE ); orig 14
 
 var MAX_SPEED             = 10
 var HORIZ_ACCEL           = 1
-var GRAVITY               = 3 // must be >= 2
-var JUMP_SPEED            = -50
+var GRAVITY               = 2.5 // must be >= 2
+var JUMP_SPEED            = -40
 
 var pi                    = 3.14159265359
 
@@ -30,7 +30,25 @@ var gray = makeColor(0.7,0.7,0.7);
 
 var DUDE_COLOR = cyan;
 
-var level0      = [ "XXXXXXXXXXXXXXXXXXXXX",
+var level0 = ["XXXXXXXXXXXXXXXXXXXXXXXXX",
+"X_______________________X",
+"X__S____________________X",
+"X_______________________X",
+"X_______________________X",
+"X_______________________X",
+"X_______________________X",
+"X_______________________X",
+"X_______________________X",
+"X_______________________X",
+"X____________X__________X",
+"X______X_____X__________X",
+"X______X_____X__________X",
+"X______X_____X__________X",
+"X______X_____X______G___X",
+"XXXXXXXXXXXXXXXXXXXXXXXXX",
+"This should be easy! (L/R to move, F to jump)" ]
+
+var levelblah      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "X___________________X",
                     "X__S________________X",
                     "X___________________X",
@@ -172,7 +190,7 @@ var leftDown = false;
 var rightDown = false;
 var dead = false;
 var levelComplete = false;
-var currentLevel = -1;
+var currentLevel = 0;
 var gravityDown = true;
 
 // movement variables
@@ -202,13 +220,15 @@ function onSetup() {
         goal.pos = new vec2( 0, 0 );
         goal.color = green;
 
-    currentLevel++
+    // currentLevel++ MOVE THIS BACK
     clearBoard();
     makeBoard();
     
     levelComplete = false;
     dead = false;
     gravityDown = true;
+    var horiz_velocity = 0;
+    var vert_velocity = 0;
 }
 
 
@@ -281,11 +301,17 @@ function render() {
     // text on the board (level counter and board message)
     drawBoardText();
 
-
-
 }
 
 function simulate(){
+
+    // debug floors...
+
+    /*debugEdges = pointsOnSquare( board[3][23] );
+    for( var i = 0; i<debugEdges.length; i++){
+        insertBack( debugShapes, debugEdges );
+    }*/
+
 
     happyMessage = null;
     sadMessage = null;
@@ -751,10 +777,6 @@ function accelerateHoriz( dir ){
         return board[xIndex][yIndex];
     }
 
-// check for a wall, given a position
-    function isWall( pos ){
-        return getTile( pos ).wall;
-    }
 // check for a collision in a position
 
 //CAN REMOVE RADIUS
@@ -786,23 +808,6 @@ function accelerateHoriz( dir ){
         diffVec = sub( pos, point );
         mag = magnitude( diffVec );
         return mag <= radius - 1;
-    }
-
-// get edges of a circle
-// this funct. probs unnecessary at this point
-    function pointsOnCircle( center, radius ){
-        var circleEdges = [];
-        var theta;
-        var thisX, thisY, thisPoint;
-        r = radius - 2;
-        for (var i=0; i<=2; i = i + 0.025){
-            theta = pi * i;
-            thisX = r * cos( theta );
-            thisY = r * sin( theta );
-            thisPoint = new vec2( center.x + thisX, center.y + thisY );
-            insertBack( circleEdges, thisPoint );
-        }
-            return circleEdges
     }
 
     // points on a square
