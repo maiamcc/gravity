@@ -4,9 +4,9 @@
 
 var START_TIME          = currentTime();
 
-var TILE_SIZE             = 90
-var BOARD_SIZE_X          = 21 //floor( screenWidth / TILE_SIZE );
-var BOARD_SIZE_Y          = 14 //floor( screenHeight / TILE_SIZE );
+var TILE_SIZE             = 90 // orig 90
+var BOARD_SIZE_X          = 21 //floor( screenWidth / TILE_SIZE ); orig 21
+var BOARD_SIZE_Y          = 14 //floor( screenHeight / TILE_SIZE ); orig 14
 
 var MAX_SPEED             = 10
 var HORIZ_ACCEL           = 1
@@ -44,7 +44,7 @@ var level0      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "X___________X_______X",
                     "X___________X___G___X",
                     "XXXXXXXXXXXXXXXXXXXXX",
-                    "This should be easy! ('F' to jump.)" ]
+                    "This should be easy! (L/R to move, F to jump.)" ]
 
 var level1      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "X___________________X",
@@ -76,9 +76,25 @@ var level2      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "X___________________X",
                     "X___________________X",
                     "XXXXXXXXXXXXXXXXXXXXX",
-                    "How will I get all the way up there?" ]                                        
+                    "How will I get all the way up there?" ]
 
 var level3      = [ "XXXXXXXXXXXXXXXXXXXXX",
+                    "X______X_______X____X",
+                    "X__X___X___X___X____X",
+                    "X__X___X___X___X____X",
+                    "X__X___X___X___X____X",
+                    "X__X___X___X___X____X",
+                    "XG_X_______X________X",
+                    "XXXXXXXXXXXXXXXXXX__X",
+                    "X_________X______X__X",  
+                    "X____X____X___X__X__X",
+                    "X____X____X___X__X__X",
+                    "X____X____X___X__X__X",
+                    "XS___X________X_____X",
+                    "XXXXXXXXXXXXXXXXXXXXX",
+                    "Slolam!" ]                                         
+
+var level8      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "Xssss________a_____wX",
                     "Xuuuu__XXXX__a_____wX",
                     "Xuu____S__X__a__B__wX",
@@ -93,6 +109,22 @@ var level3      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "XGXddd___XnnnnXXX___X",
                     "XXXXXXXXXXXXXXXXXXXXX",
                     "Getting trickier now..." ]
+
+var level9      = [ "XXXXXXXXXXXXXXXXXXXXX",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",  
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "X___________________X",
+                    "XXXXXXXXXXXXXXXXXXXXX",
+                    "blank board" ]
 
 var allMaps = [ level0, level1, level2, level3 ];
 
@@ -140,7 +172,7 @@ var leftDown = false;
 var rightDown = false;
 var dead = false;
 var levelComplete = false;
-var level_counter = 0;
+var currentLevel = -1;
 var gravityDown = true;
 
 // movement variables
@@ -162,7 +194,7 @@ var deathTime;
 //                      EVENT RULES                          //
 
 
-// When setup happens...
+// When setup happens... (gets called at the beginning of the game, and then at the beginning of each level)
 function onSetup() {
     dude = makeDude( 0, 0, DUDE_COLOR );
 
@@ -170,9 +202,13 @@ function onSetup() {
         goal.pos = new vec2( 0, 0 );
         goal.color = green;
 
+    currentLevel++
     clearBoard();
     makeBoard();
+    
     levelComplete = false;
+    dead = false;
+    gravityDown = true;
 }
 
 
@@ -193,6 +229,8 @@ function onKeyStart(key) {
             gravityDown = false;
         } else if ( key == 40 ){ // down arrow
             gravityDown = true;
+        } else if ( key == 27 ){ // escape = kill key
+            death();
         }
     }
 }
@@ -407,11 +445,7 @@ function accelerateHoriz( dir ){
             dude.color = purple;
             levelComplete = true;
             winTime = currentTime();
-            level_counter++
         }
-
-        console.log( "Good job!" );
-        // eventually this will increase the level counter and draw the next board
     }
 
     function nextLevel(){
@@ -420,7 +454,6 @@ function accelerateHoriz( dir ){
     // what happens when you die
     function death(){
         if ( !dead ){
-            console.log( "Aww snap, you died" );
         dude.color = red;
         dead = true;
         deathTime = currentTime();
@@ -430,8 +463,7 @@ function accelerateHoriz( dir ){
 
     function respawn(){
         setPos( dude, dude.startPos );
-        dude.color = DUDE_COLOR;
-        dead = false;
+        reset();
     }
 
     function getKey( index ){
@@ -471,7 +503,7 @@ function accelerateHoriz( dir ){
 
     function drawBoardText(){
         // level counter
-        fillText("LEVEL " + level_counter.toString(),
+        fillText("LEVEL " + currentLevel.toString(),
              board[ 0 ][ BOARD_SIZE_Y -1 ].center.x,
              board[ 0 ][ BOARD_SIZE_Y -1 ].center.y,             
              black, 
@@ -573,7 +605,7 @@ function accelerateHoriz( dir ){
      // Create an array of columns
         lockKeyIndexes = [ "a", "b", "c" ];
 
-        currentMap = allMaps[ level_counter ];
+        currentMap = allMaps[ currentLevel ];
 
         for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
             
