@@ -49,7 +49,7 @@ var level0 = [
             "X______X____XX______G___X",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "This should be easy! (L/R to move, F to jump)",
-            100 ]
+            "z" ]
 
 // spikes intro
 var level1 = [
@@ -70,7 +70,7 @@ var level1 = [
             "X________________nnnnnnnX",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Those look painful!",
-            100 ]
+            null ]
 
 // gravity intro
 var level2      = [ 
@@ -91,7 +91,7 @@ var level2      = [
             "X__S____________________X",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "How will I get all the way up there? (Hint: spacebar!)",
-            100 ]
+            -1 ]
 
 // more practice with gravity
 var level3      = [
@@ -112,7 +112,7 @@ var level3      = [
             "XS___X_________X________X",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Slolam!",
-            100 ]
+            -1 ]
 
 var level4      = [
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
@@ -132,7 +132,7 @@ var level4      = [
             "XS__XXXXXXXXXXXXXXXXXXXXX",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Now with 100% more danger!",
-            100]
+            -1]
 
 var level5      = [
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
@@ -154,7 +154,47 @@ var level5      = [
             "Resources are scarce. (In an emergency, use 'esc'.)",
             3 ]
 
-                // max shifts = 3
+var level6      = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Xssssssss______________wX",
+            "X__________________A___wX",
+            "X______________________wX",
+            "X____B_________XXXXXXXXXX",
+            "X______________cXXXXXXXXX",
+            "X______________c__XXXXXXX",
+            "X______________c__b_XXXXX",
+            "X______________c__b__a__X",
+            "X______________c__b__a_GX",
+            "XS_______C_____c__b__a__X",
+            "X______________c__b_XXXXX",
+            "X______________c__XXXXXXX",
+            "X______________cXXXXXXXXX",
+            "X______________XXXXXXXXXX",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Unlock your full potential.",
+            -1 ]
+
+var level7      = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X____G_XssssssssssssssssX",
+            "X______X________________X",
+            "XXXXXaaa________________X",
+            "Xssss_________________A_X",
+            "X____________________XXXX",
+            "X_______________________X",
+            "X________S____XX__XX____X",
+            "X__________X____________X",
+            "X__________X____________X",
+            "X__________XXX__________X",
+            "X______________XX_______X",
+            "X_______________________X",
+            "X__________________XX___X",
+            "X_______________________X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Honey, have you seen my keys?",
+            4 ]
+
+
 
 var level8      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "Xssss________a_____wX",
@@ -188,7 +228,7 @@ var level9      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "XXXXXXXXXXXXXXXXXXXXX",
                     "blank board" ]
 
-var allMaps = [ level0, level1, level2, level3, level4, level5 ];
+var allMaps = [ level0, level1, level2, level3, level4, level5, level6, level7 ];
 
 // images
 var NSPIKES = loadImage( "nSpikes.png");
@@ -201,6 +241,15 @@ var KEY = loadImage( "key.png" )
 var LOCK = loadImage( "lock.png" );
 var OPENLOCK = loadImage( "openLock.png" );
 var OPENLOCKTRANS = loadImage( "openLockTrans.png" );
+
+// sounds
+var UNLOCK_SOUND = loadSound( "unlock.mp3" );
+var YAY_SOUND = loadSound( "yay.mp3" );
+var FAIL_SOUND = loadSound( "sad trombone.mp3" );
+var SPIKE_SOUND = loadSound( "squish.mp3")
+
+// blip when no more reverses
+// reverse grav
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -234,7 +283,7 @@ var leftDown = false;
 var rightDown = false;
 var dead = false;
 var levelComplete = false;
-var currentLevel = 5;
+var currentLevel = 0;
 var gravityDown = true;
 var shiftsRemaining = 0;
 
@@ -290,19 +339,19 @@ function onKeyStart(key) {
                 vert_velocity = jumping;
             }
         } else if ( key == 32 ){ // spacebar
-            if ( shiftsRemaining != 0 ){
+            if ( shiftsRemaining != 0 && isNumber( shiftsRemaining ) ) {
                 gravityDown = !gravityDown
-                shiftsRemaining--
+                decrementShifts();
             }
         } else if ( key == 38 ){ // up arrow
-            if ( gravityDown && shiftsRemaining != 0 ){
+            if ( gravityDown && shiftsRemaining != 0 && isNumber( shiftsRemaining ) ){
                 gravityDown = false;
-                shiftsRemaining--
+                decrementShifts();
             }
         } else if ( key == 40 ){ // down arrow
-            if ( !gravityDown && shiftsRemaining != 0){
+            if ( !gravityDown && shiftsRemaining != 0 && isNumber( shiftsRemaining ) ){
                 gravityDown = true;
-                shiftsRemaining--
+                decrementShifts();
             }
         } else if ( key == 27 ){ // escape = kill key
             death();
@@ -318,9 +367,9 @@ function onKeyEnd(key) {
     }
 }
 
-function onClick( x, y ){
+/*function onClick( x, y ){
      console.log( x.toString() + ", " + y.toString())
- }
+ }*/
 
 // Called 30 times or more per second
 function onTick() {
@@ -365,7 +414,6 @@ function render() {
 }
 
 function simulate(){
-    console.log( shiftsRemaining )
     happyMessage = null;
     sadMessage = null;
 
@@ -526,6 +574,7 @@ function accelerateHoriz( dir ){
             dude.color = purple;
             levelComplete = true;
             winTime = currentTime();
+            playSound( YAY_SOUND );
         }
     }
 
@@ -535,9 +584,10 @@ function accelerateHoriz( dir ){
     // what happens when you die
     function death(){
         if ( !dead ){
-        dude.color = red;
-        dead = true;
-        deathTime = currentTime();
+            dude.color = red;
+            dead = true;
+            deathTime = currentTime();
+            playSound( SPIKE_SOUND );
         }
     }
 
@@ -546,7 +596,6 @@ function accelerateHoriz( dir ){
     }
 
     function getKey( index ){
-        console.log( "you got a key!" );
         keys[ index ].image = null;
         keys[ index ].active = false;
         locks[ index ].forEach( openLock );
@@ -556,8 +605,9 @@ function accelerateHoriz( dir ){
     function openLock( tile ){
         tile.active = false;
         tile.image = OPENLOCKTRANS;
-        lockWallsIndex = indexOf( walls, tile )
-        removeAt( walls, lockWallsIndex )
+        lockWallsIndex = indexOf( walls, tile );
+        removeAt( walls, lockWallsIndex );
+        playSound( UNLOCK_SOUND );
     }
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -591,6 +641,7 @@ function accelerateHoriz( dir ){
              "middle");
 
         // shift counter
+        if ( isNumber( shiftsRemaining ) ){
         fillText("SHIFTS REMAINING: ",
              board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].corner.x,
              board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
@@ -599,22 +650,24 @@ function accelerateHoriz( dir ){
              "right", 
              "middle");
 
-        if ( shiftsRemaining >= 0 ){
-            fillText(shiftsRemaining.toString(),
-                board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x + TILE_SIZE/4,
-                board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
-                black, 
-                "45px Arial Black", 
-                "right", 
-                "middle");
-        } else {
-            fillText( "∞",
-                board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x,
-                board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
-                black, 
-                "80px Arial Black", 
-                "center", 
-                "middle");
+
+            if ( shiftsRemaining >= 0 ){
+                fillText(shiftsRemaining.toString(),
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x + TILE_SIZE/4,
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
+                    black, 
+                    "45px Arial Black", 
+                    "right", 
+                    "middle");
+            } else {
+                fillText( "∞",
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x,
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
+                    black, 
+                    "80px Arial Black", 
+                    "center", 
+                    "middle");
+            }
         }
 
         // board message
@@ -680,10 +733,12 @@ function accelerateHoriz( dir ){
     }
 
     function drawGravIndicator(){
-        if ( gravityDown ){
-            drawImageInTile( DOWNARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
-        } else {
-            drawImageInTile( UPARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
+        if ( isNumber( shiftsRemaining ) ){
+            if ( gravityDown ){
+                drawImageInTile( DOWNARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
+            } else {
+                drawImageInTile( UPARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
+            }
         }
     }
 
@@ -838,7 +893,11 @@ function accelerateHoriz( dir ){
         object.pos = new vec2( object.pos.x, posY )
     }
 
-
+    function decrementShifts(){
+        if ( isNumber( shiftsRemaining ) ){
+            shiftsRemaining--
+        }
+    }
 
 
 // get index of a tile, given an (x,y) position

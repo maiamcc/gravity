@@ -27,22 +27,20 @@ new dimensions: 25x16
 
 wall jumping
 
-resources are scarce (if you messed things up, hit 'esc')
 A XXXXXXXXXXXXXXXXXXXXXXXXX
-A X_____XssXX__X___________X
-A X_____X__XX__X__________X
-A X_________X__X__________X
-A X____________X__________X
-A X________________nnn____X
-A X______XXXXXXXXXXXXX____X
-A X______sssssssssXG______X
+A X____G_X__________ssssssX
+A X______X_______________wX
+A XXXXXaaa_______________wX
+A Xssss__________________wX
+A X_______________________X
+A X______________________AX
+A X________S___________XXXX
+A X_________________X_____X
+A X___________________X___X
 A X_______________X_______X
+A X___________________X___X
 A X_______________X_______X
-A XXXXX___________X_______X
-A XXXXXnnX______XXXXXXXXXXX
-A XXXXXXXXnnX________S____X
-A XXXXXXXXXXXX____X_______X
-A XXXXXXXXXXXXX___X_______X
+A X___________________X___X
+A X_______________________X
 A XXXXXXXXXXXXXXXXXXXXXXXXX
-max shifts
 
