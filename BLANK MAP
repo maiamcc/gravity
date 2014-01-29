@@ -15,5 +15,5 @@ var levelX      = [
             A X_______________________X
             A X_______________________X
             A XXXXXXXXXXXXXXXXXXXXXXXXX
-"message",
-#shifts ]
+			"message",
+			#shifts ]

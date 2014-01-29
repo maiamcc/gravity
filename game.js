@@ -4,32 +4,53 @@
 
 var START_TIME          = currentTime();
 
-var TILE_SIZE             = 76 // orig 90
-var BOARD_SIZE_X          = 25 //floor( screenWidth / TILE_SIZE ); orig 21
-var BOARD_SIZE_Y          = 16 //floor( screenHeight / TILE_SIZE ); orig 14
+// BOARD DIMENSIONS & IMAGE DIMENSIONS
+var TILE_SIZE             = 76;
+var BOARD_SIZE_X          = 25;
+var BOARD_SIZE_Y          = 16;
 var VICTORY_IMAGE_SIZE    = 1000;
 
-var MAX_SPEED             = 8
-var HORIZ_ACCEL           = 1
-var GRAVITY               = 2 // must be >= 2
-var JUMP_SPEED            = -35
+// PHYSICS/MOVEMENT CONSTANTS
+var MAX_SPEED             = 8;
+var HORIZ_ACCEL           = 1;
+var GRAVITY               = 2;
+var JUMP_SPEED            = -35;
 
-var pi                    = 3.14159265359
-
-// colors
+// COLORS
 var red = makeColor(1, 0, 0, 1);
-var green = makeColor(0.2, .7, 0.2, 1);
+var green = makeColor(0.2, 0.7, 0.2, 1);
 var blue = makeColor(0, 0, 1, 1);
-    var transBlue = makeColor(0, 0, 1, 0.5);
-var purple = makeColor(0.5, 0.0, 1.0, 1.0);
-    var transPurple = makeColor(0.5, 0.0, 1.0, 0.5);
-var yellow = makeColor(0.5, 0.5, 0, 1)
+    var transBlue = makeColor(0, 0, 1, 0.5); // transparent version of 'blue'
+var purple = makeColor(0.5, 0, 1, 1);
+    var transPurple = makeColor(0.5, 0, 1, 0.5); // transparent version of 'purple'
 var cyan = makeColor( 0, 0.7, 0.7, 1)
 var white = makeColor(1, 1, 1, 1);
 var black = makeColor(0, 0, 0, 1);
 var gray = makeColor(0.7,0.7,0.7);
 
 var DUDE_COLOR = cyan;
+
+// LEVEL MAPS
+
+/* each level is stored in an array of strings (and some other info, too). The first 16 lines represent
+    the tiles of the board, with each character standing for a different board element:
+        S = player spawn point (one only)
+        G = goal (one only)
+        X = wall
+        x = invisible wall
+        n, e, s, w = spikes facing in that direction
+        u, d = tiles that set gravity to up or down
+        a, b, c, f, h, i = locks
+        A, B, C, F, H, I = corresponding keys
+
+    Information stored after the end of the board:
+        17th line --> board message (displays at the top of the level)
+        18th line --> # of shifts
+            Positive or zero value --> that number of shifts allowed
+            Negative value --> infinite shifts
+            Non-numeric value (string, etc.) --> shifting disabled on this level
+        19th line --> put the value 1 in the 19th line to declare this level the final level
+        */
 
 // intro level
 var level0 = [
@@ -133,8 +154,9 @@ var level4      = [
             "XS__XXXXXXXXXXXXXXXXXXXXX",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Now with 100% more danger!",
-            -1]
+            -1 ]
 
+// introduce shift caps & kill key
 var level5      = [
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "X_____XssXX_____________X",
@@ -155,6 +177,7 @@ var level5      = [
             "Resources are scarce. (In an emergency, use 'esc'.)",
             3 ]
 
+// introduce keys & locks
 var level6      = [
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Xssssssss______________wX",
@@ -195,6 +218,7 @@ var level7      = [
             "Honey, have you seen my keys?",
             4 ]
 
+// introduce up-grav and down-grav tiles
 var level8      = [
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "X________a______uuXXXXXXX",
@@ -295,6 +319,7 @@ var level12     = [
             "Be careful what you wish for...",
             2 ]
 
+// invisible walls, just for fun!
 var level13      = [
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Xxxx__________x___S_____X",
@@ -315,6 +340,7 @@ var level13      = [
             "How very puzzling!",
             -1 ]            
 
+// the victory level! Yay!
 var victory     = [
                     "XXXXXXXXXXXXXXXXXXXXXXXXX",
                     "X______________________GX",
@@ -339,7 +365,7 @@ var victory     = [
 var allMaps = [ level0, level1, level2, level3, level4, level5, level6, level7,
                 level8, level9, level10, level11, level12, level13, victory ];
 
-// images
+// IMAGES
 var NSPIKES = loadImage( "nSpikes.png");
 var ESPIKES = loadImage( "eSpikes.png");
 var SSPIKES = loadImage( "sSpikes.png");
@@ -353,7 +379,7 @@ var OPENLOCKTRANS = loadImage( "openLockTrans.png" );
 var VICTORY = loadImage( "balloonsConfetti.png" );
 var PLAY_AGAIN = loadImage( "playagain.png" );
 
-// sounds
+// SOUNDS
 var UNLOCK_SOUND = loadSound( "unlock.mp3" );
 var YAY_SOUND = loadSound( "yay.mp3" );
 var SPIKE_SOUND = loadSound( "squish.mp3" );
@@ -366,7 +392,7 @@ var CHEERING_SOUND = loadSound( "cheering.mp3" );
 //                                                           //
 //                     MUTABLE STATE                         //
 
-// board variables
+// BOARD VARIABLES
     var board = [];
     var walls = [];
     var locks0 = [];
@@ -394,7 +420,7 @@ var CHEERING_SOUND = loadSound( "cheering.mp3" );
     var dude;
     var goal;
 
-// game state variables
+// GAME STATE VARIABLES
 var leftDown = false;
 var rightDown = false;
 var dead = false;
@@ -406,55 +432,53 @@ var inUpGrav = false;
 var inDownGrav = false;
 var victoryLevel = false;
 
-// movement variables
+// MOVEMENT VARIABLES
 var horiz_velocity = 0;
 var vert_velocity = 0;
 var grav_accel = GRAVITY;
 var jumping;
 var nextPos;
 
-// time variables
-var curTime = 0;
-var deathTime;
-
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                      EVENT RULES                          //
 
 
-// When setup happens... (gets called at the beginning of the game, and then at the beginning of each level)
+// When setup happens... (gets called at the beginning of the game, 
+    // and then at the beginning of each level)
 function onSetup() {
+    // reset game state
     levelComplete = false;
     dead = false;
     gravityDown = true;
     victoryLevel = false;
+    var horiz_velocity = 0;
+    var vert_velocity = 0;
 
+    // make the dude and the goal anew
     dude = makeDude( 0, 0, DUDE_COLOR );
-
     goal = new Object();
         goal.pos = new vec2( 0, 0 );
         goal.color = green;
 
+    // clear board and make a new one
     clearBoard();
     makeBoard();
 
-    var horiz_velocity = 0;
-    var vert_velocity = 0;
 }
-
 
 // When a key is pushed
 function onKeyStart(key) {    
     if ( !dead && !levelComplete ){
-        if ( key == 37 ){ // left arrow
+        if ( key == 37 ){ // left arrow --> move left
             leftDown = true;
-        } else if ( key == 39 ){ // right arrow
+        } else if ( key == 39 ){ // right arrow --> move right
             rightDown = true;
-        } else if ( key == 70 ){ // 'f' key
+        } else if ( key == 70 ){ // 'f' key --> jump
             if ( vert_velocity == 0 ){ // checks for double jumps
                 vert_velocity = jumping;
             }
-        } else if ( key == 32 ){ // spacebar
+        } else if ( key == 32 ){ // spacebar --> reverse gravity
             if ( gravityDown ){
                 shiftGrav( "up" );
                 decrementShifts();
@@ -462,17 +486,17 @@ function onKeyStart(key) {
                 shiftGrav( "down" );
                 decrementShifts();
             }
-        } else if ( key == 38 ){ // up arrow
+        } else if ( key == 38 ){ // up arrow --> set gravity = "up"
             if ( gravityDown ){    
                 shiftGrav( "up" );
                 decrementShifts();
             }
-        } else if ( key == 40 ){ // down arrow
+        } else if ( key == 40 ){ // down arrow --> set gravity = "down"
             if ( !gravityDown ){    
                 shiftGrav( "down" );
                 decrementShifts();
             }
-        } else if ( key == 27 ){ // escape = kill key
+        } else if ( key == 27 ){ // escape --> kill dude to reset level
             death();
         }
     }
@@ -494,12 +518,11 @@ function onTick() {
 
 function render() {
     clearScreen();
-    curTime = floor( currentTime() - START_TIME );
 
-    // Draw a black background
+    // draw a black background
     fillRectangle(0, 0, screenWidth, screenHeight, black );
 
-    // Draw a white background where the board is
+    // draw a white background where the board is
     fillRectangle( board[0][0].corner.x, board[0][0].corner.y, TILE_SIZE * BOARD_SIZE_X, TILE_SIZE * BOARD_SIZE_Y, white );
 
     // draw the goal
@@ -518,7 +541,7 @@ function render() {
     // draw gravity indicator
     drawGravIndicator();
 
-    // draw grid (should be last thing, except for text)
+    // draw grid (should be last thing drawn, except for text)
     drawGrid();
 
     // text on the board (level counter and board message)
@@ -532,104 +555,117 @@ function simulate(){
         sadMessage = null;
     }
 
-    if ( gravityDown ){
-        jumping = JUMP_SPEED
-        grav_accel = GRAVITY
-    } else {
-        jumping = JUMP_SPEED * -1
-        grav_accel = GRAVITY * -1
-    }
-
-    if ( leftDown == true ){
-        moveHoriz( "left" );    
-        
-    } else if ( rightDown == true ){
-        moveHoriz( "right" );
-    }
-
-    moveVert();
-
-    // check if dude is in the goal; if so, win
-    if ( checkIntersection( getTile( goal.pos ), dude.pos ) ){
-        beatLevel();
-    }
-
-    // check if the dude is in spikes; if so, die
-    inSpikes = forAny( spikes, checkIntersection );
-    if ( inSpikes && !levelComplete){
-        death();
-    }
-
-    // check if the dude is in up-grav square; if so, set gravity to up
-    inUpGrav = forAny( upGrav, checkIntersection );
-    inDownGrav = forAny( downGrav, checkIntersection );
-    if ( inUpGrav ){
-        gravityDown = false;
-    } else if ( inDownGrav ){
-        gravityDown = true;
-    }
-
-    // check to see if dude has gotten a key
-    inKey = forAny( keys, checkIntersection );
-    if ( inKey ){
-        keyIndex = forAnyIndex( keys, checkIntersection )
-        if ( keys[ keyIndex ].active == true ){
-            getKey( keyIndex );
+    // MOVEMENT
+        // depending on direction of gravity, adjust numerical values of vertical accel. and jumping
+        if ( gravityDown ){
+            jumping = JUMP_SPEED
+            grav_accel = GRAVITY
+        } else {
+            jumping = JUMP_SPEED * -1
+            grav_accel = GRAVITY * -1
         }
-    }
-    
-    // once a key has been gotten, can decrement lockDraw to fade out the lock
-        for ( var i = 0; i<allLocks.length; i++){
-            if ( !allLocks[i].active && allLocks[i].lockDraw > 0 ){
-                allLocks[i].lockDraw = allLocks[i].lockDraw - 1 ;
+
+        // move left or right
+        if ( leftDown == true ){
+            moveHoriz( "left" );    
+        } else if ( rightDown == true ){
+            moveHoriz( "right" );
+        }
+
+        // move vertically
+        moveVert();
+
+    // RESPOND TO THE TILE THE DUDE IS STANDING IN
+
+        // check if dude is in the goal; if so, win
+        if ( checkIntersection( getTile( goal.pos ), dude.pos ) ){
+            beatLevel();
+        }
+
+        // check if the dude is in spikes; if so, die
+        inSpikes = forAny( spikes, checkIntersection );
+        if ( inSpikes && !levelComplete){
+            death();
+        }
+
+        // check if the dude is in up-grav or down-grav square; if so, set gravity accordingly
+        inUpGrav = forAny( upGrav, checkIntersection );
+        inDownGrav = forAny( downGrav, checkIntersection );
+        if ( inUpGrav ){
+            gravityDown = false;
+        } else if ( inDownGrav ){
+            gravityDown = true;
+        }
+
+        // check to see if dude has gotten a key
+        inKey = forAny( keys, checkIntersection );
+        if ( inKey ){
+            keyIndex = forAnyIndex( keys, checkIntersection )
+            if ( keys[ keyIndex ].active == true ){
+                getKey( keyIndex );
+            }
+        }
+        
+            // once a key has been gotten, can decrement lockDraw to fade out the lock
+                for ( var i = 0; i<allLocks.length; i++){
+                    if ( !allLocks[i].active && allLocks[i].lockDraw > 0 ){
+                        allLocks[i].lockDraw = allLocks[i].lockDraw - 1 ;
+                    }
+                }
+
+    // RESPOND TO CHARACTER STATE
+
+        // when dude is dead...
+        if ( dead ){
+            timeSinceDeath = currentTime() - deathTime;
+            
+            // disable motion
+            leftDown = false;
+            rightDown = false;
+
+            if ( timeSinceDeath > 0 && timeSinceDeath < 1.5 ){
+                // write a sad message on the screen
+                sadMessage = "Oh noes, you died! =( "
+            }
+
+            if ( timeSinceDeath > 1 && timeSinceDeath < 1.5 ){
+                // disappear
+                setPos( dude, new vec2( -100, -100 ) );
+                sadMessage = "Oh noes, you died! =( "
+                gravityDown = true;
+            } else if ( timeSinceDeath > 1.5 ){
+                reset(); //calls onSetup, which will reset the board (and the dude with it)
             }
         }
 
-    // things to do when the character is dead
-    if ( dead ){
-        timeSinceDeath = currentTime() - deathTime;
-        leftDown = false;
-        rightDown = false;
-
-        if ( timeSinceDeath > 0 && timeSinceDeath < 1.5 ){
-            // sad message
-            sadMessage = "Oh noes, you died! =( "
-        }
-
-        if ( timeSinceDeath > 1 && timeSinceDeath < 1.5 ){
-            // disappear
-            setPos( dude, new vec2( -100, -100 ) );
-            sadMessage = "Oh noes, you died! =( "
-            gravityDown = true;
-        } else if ( timeSinceDeath > 1.5 ){
-            respawn();
-        }
-    }
-
-    // handles making the next level
+    // if the level is complete...
     if ( levelComplete ){
         timeSinceWin = currentTime() - winTime;
+        
+        // disable motion
         leftDown = false;
         rightDown = false;
 
-        // special case: if last level, restarts the game
+        // special case: if you just beat the last level, restart the game
         if ( victoryLevel ){
             if ( timeSinceWin > 1.5 ){
                 currentLevel = 0;
-                nextLevel();
+                reset(); //calls onSetup, which will reset the board and draw the next level
             }
         } else {
             if ( timeSinceWin > 0 && timeSinceWin < 1.5 ){
                 // happy message
                 happyMessage = "GREAT JOB!";
             } else if ( timeSinceWin > 1.5 ){
+                // go to the next level
                 currentLevel++;
-                nextLevel();
+                reset(); //calls onSetup, which will reset the board and draw the next level
             }
         }
     }
 }
 
+// calculate horizontal acceleration and uses it to change velocity
 function accelerateHoriz( dir ){
 
     // figure out relevant values (i.e. positive vs. negative) according to direction of motion
@@ -651,119 +687,130 @@ function accelerateHoriz( dir ){
     }
 }
 
-    // move horizontally
-    function moveHoriz( dir ){
-        accelerateHoriz( dir );
-        nextPos = new vec2( dude.pos.x + horiz_velocity, dude.pos.y )
-        nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos, "horiz" ) } );
-            if( nextCollides ){
-                var curTile = getTile( dude.pos );
-                setPos( dude, vec2 ( curTile.center.x, dude.pos.y ) );
-            } else {
-                setPos( dude, nextPos );
-            }
-    }
+// move horizontally
+function moveHoriz( dir ){
+    // first, find current accel.
+    accelerateHoriz( dir );
+    nextPos = new vec2( dude.pos.x + horiz_velocity, dude.pos.y )
+    nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos, "horiz" ) } );
+        if( nextCollides ){
+            // if your full move results in hitting a wall, just go to the edge of your current tile
+            var curTile = getTile( dude.pos );
+            setPos( dude, vec2 ( curTile.center.x, dude.pos.y ) );
+        } else {
+            // otherwise, change your position by current velocity
+            setPos( dude, nextPos );
+        }
+}
 
-    // move vertically (i.e. apply gravity)
-    function moveVert( dir ){
-        vert_velocity = vert_velocity + grav_accel;
-        nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
-        nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
+// move vertically (i.e. apply gravity)
+function moveVert( dir ){
+    // first, find current accel.
+    vert_velocity = vert_velocity + grav_accel;
+    nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
+    nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
 
-            if( nextCollides ){
+        if( nextCollides ){
+            // if your full move results in hitting a wall, try moving half that distance
+            vert_velocity = vert_velocity/2
+            nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
+            nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
+            if ( nextCollides ){
+                // if you STILL hit a wall, check half THAT distance
                 vert_velocity = vert_velocity/2
                 nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
-                nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
+                nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );            
                 if ( nextCollides ){
-                    vert_velocity = vert_velocity/2
-                    nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
-                    nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );            
-                    if ( nextCollides ){
-                        vert_velocity = 0
-                    } else {
-                        setPos( dude, nextPos );    
-                    }
+                    // if you STILL hit a wall, try half that distance, and if you still hit
+                        //a wall, just stay still
+                    vert_velocity = 0
                 } else {
-                    setPos( dude, nextPos );
+                    // otherwise, move by that distance
+                    setPos( dude, nextPos );    
                 }
             } else {
+                // otherwise, move by that distance
                 setPos( dude, nextPos );
             }
-    }
-
-    // what happens when you beat the level
-    function beatLevel(){
-        if ( !levelComplete && !dead ){        
-            dude.color = purple;
-            levelComplete = true;
-            winTime = currentTime();
-            playSound( YAY_SOUND );
+        } else {
+            // otherwise, move by that distance
+            setPos( dude, nextPos );
         }
-    }
+}
 
-    function nextLevel(){
-        reset();
+// what happens when you beat the level
+function beatLevel(){
+    if ( !levelComplete && !dead ){        
+        dude.color = purple;
+        levelComplete = true;
+        winTime = currentTime();
+        playSound( YAY_SOUND );
     }
-    // what happens when you die
-    function death(){
-        if ( !dead ){
-            dude.color = red;
-            dead = true;
-            deathTime = currentTime();
-            playSound( SPIKE_SOUND );
+}
+
+// what happens when you die
+function death(){
+    if ( !dead ){
+        dude.color = red;
+        dead = true;
+        deathTime = currentTime();
+        playSound( SPIKE_SOUND );
+    }
+}
+
+// what happens when you get a key
+function getKey( index ){
+    // key disappears
+    keys[ index ].image = null;
+
+    // key is deactivated so you can't collect it more than once
+    keys[ index ].active = false;
+
+    // open the corresponding lock
+    locks[ index ].forEach( openLock );
+}
+
+// opening a single tile of lock; will then be applied to each square of a macro-lock
+function openLock( tile ){
+    // lock is deactivated so transparency will work
+    tile.active = false;
+
+    // change lock image to the open lock
+    tile.image = OPENLOCKTRANS;
+
+    // remove from the array of walls so it doesn't block movement
+    lockWallsIndex = indexOf( walls, tile );
+    removeAt( walls, lockWallsIndex );
+
+    playSound( UNLOCK_SOUND );
+}
+
+// shift gravity in specified direction, if there are shifts remaining
+function shiftGrav( dir ){
+    if ( shiftsRemaining !== 0 && isNumber( shiftsRemaining ) ){
+        stopAllGravSounds();
+
+        if ( dir == "up" ){
+                if ( inDownGrav ){
+                    playSound( NOSHIFT_SOUND );
+                } else {
+                    gravityDown = false;
+                    playSound( UP_SOUND );
+                }
+        } else if ( dir == "down" ){
+                if ( inUpGrav ){
+                    playSound( NOSHIFT_SOUND );
+                } else {
+                    gravityDown = true;
+                    playSound( DOWN_SOUND );
+                }
+        } else {
+            alert( "Invalid gravity direction!")
         }
+    } else if ( shiftsRemaining == 0 ){
+        playSound( NOSHIFT_SOUND );
     }
-
-    function respawn(){
-        reset();
-    }
-
-    function getKey( index ){
-        keys[ index ].image = null;
-        keys[ index ].active = false;
-        locks[ index ].forEach( openLock );
-    }
-
-    // opening a single tile of lock; will then be applied to each square of a macro-lock
-    function openLock( tile ){
-        tile.active = false;
-        tile.image = OPENLOCKTRANS;
-        lockWallsIndex = indexOf( walls, tile );
-        removeAt( walls, lockWallsIndex );
-        playSound( UNLOCK_SOUND );
-    }
-
-    function shiftGrav( dir ){
-        if ( shiftsRemaining !== 0 && isNumber( shiftsRemaining ) ){
-            stopAllGravSounds();
-
-            if ( dir == "up" ){
-                    if ( inDownGrav ){
-                        playSound( NOSHIFT_SOUND );
-                    } else {
-                        gravityDown = false;
-                        playSound( UP_SOUND );
-                    }
-            } else if ( dir == "down" ){
-                    if ( inUpGrav ){
-                        playSound( NOSHIFT_SOUND );
-                    } else {
-                        gravityDown = true;
-                        playSound( DOWN_SOUND );
-                    }
-            } else {
-                alert( "Invalid gravity direction!")
-            }
-        } else if ( shiftsRemaining == 0 ){
-            playSound( NOSHIFT_SOUND );
-        }
-    }
-
-    function stopAllGravSounds(){
-        stopSound( UP_SOUND );
-        stopSound( DOWN_SOUND );
-        stopSound( NOSHIFT_SOUND );
-    }
+}
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -1123,27 +1170,22 @@ function accelerateHoriz( dir ){
 
     // check if a given point is within a circle the size of 'dude' (either at a given position or,
         // otherwise, centered at dude.pos)
-
-//CAN REMOVE RADIUS
-    function withinCircle( point, pos, radius ){
+    function withinCircle( point, pos ){
         if (pos == null){
             pos = dude.pos;
         }
 
-        if (radius == null){
-            radius = dude.radius;
-        } 
-
         diffVec = sub( pos, point );
         mag = magnitude( diffVec );
-        return mag <= radius - 1;
+        return mag <= dude.radius - 1;
     }
 
-    // points on a square
+    // returns a set of points on the edge of a tile 
+        // direction == "horiz" --> only e & w edges. Otherwise, will return points on all 4 edges
     function pointsOnSquare( corner, direction ){
         var squareEdges = [];
         var nPoint, ePoint, sPoint, wPoint
-        var z = 5
+        var z = 5 //number of points per side
         var a;
 
         if ( direction == "horiz"){
@@ -1156,13 +1198,13 @@ function accelerateHoriz( dir ){
         var seCorner = new vec2( corner.x + TILE_SIZE, corner.y - a + TILE_SIZE )
         var swCorner = new vec2( corner.x, corner.y - a + TILE_SIZE )
 
-            insertBack( squareEdges, nwCorner );
-            insertBack( squareEdges, neCorner );
-            insertBack( squareEdges, seCorner );
-            insertBack( squareEdges, swCorner );
+        insertBack( squareEdges, nwCorner );
+        insertBack( squareEdges, neCorner );
+        insertBack( squareEdges, seCorner );
+        insertBack( squareEdges, swCorner );
 
         for (var i=1; i<z; i++){
-            
+
             ePoint = new vec2( neCorner.x, neCorner.y + i * (TILE_SIZE/z) )
             wPoint = new vec2( corner.x, corner.y + i * (TILE_SIZE/z) )
             insertBack( squareEdges, ePoint );
@@ -1175,16 +1217,19 @@ function accelerateHoriz( dir ){
                 insertBack( squareEdges, sPoint );
             }
         }
-            return squareEdges
+
+        return squareEdges
     }
 
 // LOGIC
+    
+    // return 'true' if a given conditional function returns 'true' for ANY of the elements of an array
     function forAny( stuff, conditional ){
             var condition = false;
                 stuff.forEach( function( x ) { 
                     var temp = conditional( x )
                             if ( temp !== true && temp !== false ){
-                                alert( "AAAH! (forAny passed a function that did not return true or false.)" );
+                                alert( "forAny passed a function that did not return true or false.)" );
                             }
                                 if( temp ) { 
                                     condition = true 
@@ -1193,6 +1238,8 @@ function accelerateHoriz( dir ){
             return condition;
     }
 
+    // if a given conditional function returns 'true' for ANY of the elements of an array, returns
+        // the index of that array element
     function forAnyIndex( stuff, conditional ){
         var condition = false;
         var thisIndex;
@@ -1206,4 +1253,13 @@ function accelerateHoriz( dir ){
                         }
             }   
         return thisIndex;
+    }
+
+// SOUNDS
+
+    // stops all sounds associated with gravity
+    function stopAllGravSounds(){
+        stopSound( UP_SOUND );
+        stopSound( DOWN_SOUND );
+        stopSound( NOSHIFT_SOUND );
     }
