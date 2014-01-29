@@ -195,25 +195,127 @@ var level7      = [
             "Honey, have you seen my keys?",
             4 ]
 
+var level8      = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X________a______uuXXXXXXX",
+            "X________a______uuuXXXXXX",
+            "X________X______uuuuuXXXX",
+            "X________X______uuuuuuuXX",
+            "X___S____X______uuuuuuuXX",
+            "X________X_________XX___X",
+            "X________Xnnnnnnnn______X",
+            "X________XXXXXXXXX______X",
+            "X_________X__G__________X",
+            "X_________X_____________X",
+            "X______A__X_____________X",
+            "XdddddddddX_____________X",
+            "XdddddddddX_____________X",
+            "XdddddddddX_____________X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Wait, I'm a little... stuck.",
+            10 ]
 
+var level9      = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X_____uuuuX_____dddd_A__X",
+            "X_____uuuuX_____dddd____X",
+            "X_____uuuuX_____________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X________wX_____________X",
+            "X________wX_____________X",
+            "X________wX_____________X",
+            "X________wX_____nnnn____X",
+            "X________wXXXXXXXXXXaaaXX",
+            "X_________ssssssssss____X",
+            "X_______________________X",
+            "X_________uuuuuuuuuu____X",    
+            "X_S_______uuuuuuuuuu_G__X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Warning: persnickety gravity ahead!",
+            4 ]
 
-/*var level8      = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "Xssss________a_____wX",
-                    "Xuuuu__XXXX__a_____wX",
-                    "Xuu____S__X__a__B__wX",
-                    "Xuu_A_____XXXX_____wX",
-                    "X_________sssX______X",
-                    "X____________X______X",
-                    "X___________________X",
-                    "X___________________X",  
-                    "X_______________X___X",
-                    "XbXddd___X______X___X",
-                    "X_Xddd___X____XXX___X",
-                    "XGXddd___XnnnnXXX___X",
-                    "XXXXXXXXXXXXXXXXXXXXX",
-                    "Getting trickier now..." ]*/
+var level10      = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "XGb_X_f_X_____________aSX",
+            "XXX_X_f_X_____________X_X",
+            "X___X_f_X_____________X_X",
+            "XccXX_X_X_____________X_X",
+            "X_____X_X_____________X_X",
+            "XXXXXXX_X_____________X_X",
+            "X______FX_____________X_X",
+            "XXXXhhhXX_____________X_X",
+            "X_____________________X_X",
+            "XuuuuuuuuuuuuuuuuuuuuuX_X",
+            "XuuuuuuXXXXuuuuuuuuuuuX_X",
+            "XuuuuuuuuuuuuuuuuuuCuuX_X",
+            "XuuBuuuuuuuuuuuuuuuuuuX_X",
+            "XuuuuuuuuHuunnnuuuuuuuXAX",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Boinnnng!",
+            4 ]
 
-var level8     = [
+var level11     = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X_________j__sssssssssssX",
+            "X_XXXXXXXXX_____________X",
+            "X_X___i___________J_____X",
+            "X_X_XXXXXXXX_C_________BX",
+            "X_X_X_b___X_____________X",
+            "X_X_X_XXX_X____F_____H__X",
+            "X_XhX_XGXcX_____________X",
+            "X_X_X_a_X_X_______I_____X",
+            "X_X_XXXXX_X_____________X",
+            "X_X___f___X_____________X",
+            "X_XXXXXXXXX_____________X",
+            "X________AX_____________X",
+            "X_________X_____________X",
+            "X____nnnnnX________S____X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Shift at your own risk.",
+            -1 ]
+
+var level12     = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "XS___a___b_____F_____C__X",
+            "X____X___b______________X",
+            "X___AX___b__XXXXXXXXXXXXX",
+            "XXXXXX___X______________X",
+            "X________Xdddddddddd____X",
+            "X__B_____Xffffffffff____X",
+            "X________Xnnnnnnnnnn____X",
+            "X________XXXXXXXXXXX____X",
+            "X________Xssssssssss____X",
+            "X________Xhhhhhhhhhh____X",
+            "X________Xuuuuuuuuu___H_X",
+            "X________X____XXXXXXXXXXX",
+            "X________X___________c__X",
+            "XnnnnnnnnX___________c_GX",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Be careful what you wish for...",
+            2 ]
+
+var level13      = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Xxxx__________x___S_____X",
+            "Xxxx_____x____x__xxxxxxxX",
+            "Xxxu_____x____x_________X",
+            "Xxxu_____x____xxxxxx____X",
+            "Xxuu_____x______________X",
+            "Xxuu_____xxxxxxxxxxxxaaaX",
+            "Xuuu_____x____x_________X",
+            "Xuuuxxxxxx___x__________X",
+            "X________x____x__x______X",
+            "X________x__G____x______X",
+            "X_A______xxxxxxxxx______X",
+            "X________x______________X",
+            "X________x______________X",
+            "X________x______________X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "How very puzzling!",
+            -1 ]            
+
+var victory     = [
                     "XXXXXXXXXXXXXXXXXXXXXXXXX",
                     "X______________________GX",
                     "X_______________________X",
@@ -234,7 +336,8 @@ var level8     = [
                     -1,
                     1 ]
 
-var allMaps = [ level0, level1, level2, level3, level4, level5, level6, level7, level8 ];
+var allMaps = [ level0, level1, level2, level3, level4, level5, level6, level7,
+                level8, level9, level10, level11, level12, level13, victory ];
 
 // images
 var NSPIKES = loadImage( "nSpikes.png");
@@ -267,9 +370,14 @@ var CHEERING_SOUND = loadSound( "cheering.mp3" );
     var board = [];
     var walls = [];
     var locks0 = [];
+    var locks0 = [];
     var locks1 = [];
     var locks2 = [];
-    var locks = [ locks0, locks1, locks2 ];
+    var locks3 = [];
+    var locks4 = [];
+    var locks5 = [];
+    var locks6 = [];
+    var locks = [ locks0, locks1, locks2, locks3, locks4, locks5, locks6 ];
     var spikes = [];
     var upGrav = [];
     var downGrav = [];
@@ -291,7 +399,7 @@ var leftDown = false;
 var rightDown = false;
 var dead = false;
 var levelComplete = false;
-var currentLevel = 8;
+var currentLevel = 13;
 var gravityDown = true;
 var shiftsRemaining = 0;
 var inUpGrav = false;
@@ -349,16 +457,20 @@ function onKeyStart(key) {
         } else if ( key == 32 ){ // spacebar
             if ( gravityDown ){
                 shiftGrav( "up" );
+                decrementShifts();
             } else {
                 shiftGrav( "down" );
+                decrementShifts();
             }
         } else if ( key == 38 ){ // up arrow
             if ( gravityDown ){    
                 shiftGrav( "up" );
+                decrementShifts();
             }
         } else if ( key == 40 ){ // down arrow
             if ( !gravityDown ){    
                 shiftGrav( "down" );
+                decrementShifts();
             }
         } else if ( key == 27 ){ // escape = kill key
             death();
@@ -373,10 +485,6 @@ function onKeyEnd(key) {
         horiz_velocity = 0;
     }
 }
-
-function onClick( x, y ){
-     console.log( x.toString() + ", " + y.toString())
- }
 
 // Called 30 times or more per second
 function onTick() {
@@ -628,7 +736,6 @@ function accelerateHoriz( dir ){
     function shiftGrav( dir ){
         if ( shiftsRemaining !== 0 && isNumber( shiftsRemaining ) ){
             stopAllGravSounds();
-            decrementShifts();
 
             if ( dir == "up" ){
                     if ( inDownGrav ){
@@ -651,7 +758,6 @@ function accelerateHoriz( dir ){
             playSound( NOSHIFT_SOUND );
         }
     }
-
 
     function stopAllGravSounds(){
         stopSound( UP_SOUND );
@@ -837,7 +943,7 @@ function accelerateHoriz( dir ){
     // make the board
     function makeBoard(){
      // Create an array of columns
-        lockKeyIndexes = [ "a", "b", "c" ];
+        lockKeyIndexes = [ "a", "b", "c", "f", "h", "i", "j" ];
 
         currentMap = allMaps[ currentLevel ];
 
@@ -865,8 +971,10 @@ function accelerateHoriz( dir ){
                 
                 // walls, spawn, goal
                 if ( mapElement == "X" ){
-                    insertBack( walls, tile )
-                    insertBack( filledWalls, tile )
+                    insertBack( walls, tile );
+                    insertBack( filledWalls, tile );
+                } else if ( mapElement == "x" ){
+                    insertBack( walls, tile );
                 } else if ( mapElement == "G" ){
                     goal.pos = tile.center;
                 } else if ( mapElement == "S" ){
@@ -901,14 +1009,22 @@ function accelerateHoriz( dir ){
                 //keys and locks
                 else if ( mapElement == "A" || 
                             mapElement == "B" ||
-                            mapElement == "C" ){
+                            mapElement == "C" ||
+                            mapElement == "F" ||
+                            mapElement == "H" ||
+                            mapElement == "I" ||
+                            mapElement == "J" ){
                     tile.image = KEY;
                     tile.active = true;
                     insertionIndex = indexOf( lockKeyIndexes, mapElement.toLowerCase() );
                     insertAt( keys, insertionIndex, tile );
                 }  else if ( mapElement == "a" || 
                                 mapElement == "b" ||
-                                mapElement == "c" ){
+                                mapElement == "c" ||
+                                mapElement == "f" ||
+                                mapElement == "h" ||
+                                mapElement == "i" ||
+                                mapElement == "j" ){
                     insertBack( walls, tile )
 
                     tile.image = LOCK;
@@ -944,7 +1060,10 @@ function accelerateHoriz( dir ){
         locks0 = [];
         locks1 = [];
         locks2 = [];
-        locks = [ locks0, locks1, locks2 ];
+        locks3 = [];
+        locks4 = [];
+        locks5 = [];
+        locks6 = [];
         spikes = [];
         upGrav = [];
         downGrav = [];
