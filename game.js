@@ -7,6 +7,7 @@ var START_TIME          = currentTime();
 var TILE_SIZE             = 76 // orig 90
 var BOARD_SIZE_X          = 25 //floor( screenWidth / TILE_SIZE ); orig 21
 var BOARD_SIZE_Y          = 16 //floor( screenHeight / TILE_SIZE ); orig 14
+var VICTORY_IMAGE_SIZE    = 1000;
 
 var MAX_SPEED             = 8
 var HORIZ_ACCEL           = 1
@@ -49,7 +50,7 @@ var level0 = [
             "X______X____XX______G___X",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "This should be easy! (L/R to move, F to jump)",
-            "z" ]
+            "z" ] //a non-numeric value here will disable shifting on a given level
 
 // spikes intro
 var level1 = [
@@ -70,7 +71,7 @@ var level1 = [
             "X________________nnnnnnnX",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Those look painful!",
-            null ]
+            "z" ]
 
 // gravity intro
 var level2      = [ 
@@ -91,7 +92,7 @@ var level2      = [
             "X__S____________________X",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "How will I get all the way up there? (Hint: spacebar!)",
-            -1 ]
+            -1 ] //a negative value here sets #shifts = infinity
 
 // more practice with gravity
 var level3      = [
@@ -196,7 +197,7 @@ var level7      = [
 
 
 
-var level8      = [ "XXXXXXXXXXXXXXXXXXXXX",
+/*var level8      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "Xssss________a_____wX",
                     "Xuuuu__XXXX__a_____wX",
                     "Xuu____S__X__a__B__wX",
@@ -210,25 +211,30 @@ var level8      = [ "XXXXXXXXXXXXXXXXXXXXX",
                     "X_Xddd___X____XXX___X",
                     "XGXddd___XnnnnXXX___X",
                     "XXXXXXXXXXXXXXXXXXXXX",
-                    "Getting trickier now..." ]
+                    "Getting trickier now..." ]*/
 
-var level9      = [ "XXXXXXXXXXXXXXXXXXXXX",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",  
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "X___________________X",
-                    "XXXXXXXXXXXXXXXXXXXXX",
-                    "blank board" ]
+var level8     = [
+                    "XXXXXXXXXXXXXXXXXXXXXXXXX",
+                    "X______________________GX",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "X_____S_________________X",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "X_______________________X",
+                    "XXXXXXXXXXXXXXXXXXXXXXXXX",
+                    "Party time!",
+                    -1,
+                    1 ]
 
-var allMaps = [ level0, level1, level2, level3, level4, level5, level6, level7 ];
+var allMaps = [ level0, level1, level2, level3, level4, level5, level6, level7, level8 ];
 
 // images
 var NSPIKES = loadImage( "nSpikes.png");
@@ -241,15 +247,17 @@ var KEY = loadImage( "key.png" )
 var LOCK = loadImage( "lock.png" );
 var OPENLOCK = loadImage( "openLock.png" );
 var OPENLOCKTRANS = loadImage( "openLockTrans.png" );
+var VICTORY = loadImage( "balloonsConfetti.png" );
+var PLAY_AGAIN = loadImage( "playagain.png" );
 
 // sounds
 var UNLOCK_SOUND = loadSound( "unlock.mp3" );
 var YAY_SOUND = loadSound( "yay.mp3" );
-var FAIL_SOUND = loadSound( "sad trombone.mp3" );
-var SPIKE_SOUND = loadSound( "squish.mp3")
-
-// blip when no more reverses
-// reverse grav
+var SPIKE_SOUND = loadSound( "squish.mp3" );
+var UP_SOUND = loadSound( "alarmup.wav" );
+var DOWN_SOUND = loadSound( "alarmdown.wav" );
+var NOSHIFT_SOUND = loadSound( " noShift.mp3 ");
+var CHEERING_SOUND = loadSound( "cheering.mp3" );
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -283,19 +291,19 @@ var leftDown = false;
 var rightDown = false;
 var dead = false;
 var levelComplete = false;
-var currentLevel = 0;
+var currentLevel = 8;
 var gravityDown = true;
 var shiftsRemaining = 0;
+var inUpGrav = false;
+var inDownGrav = false;
+var victoryLevel = false;
 
 // movement variables
-
-
 var horiz_velocity = 0;
 var vert_velocity = 0;
 var grav_accel = GRAVITY;
 var jumping;
 var nextPos;
-
 
 // time variables
 var curTime = 0;
@@ -311,6 +319,7 @@ function onSetup() {
     levelComplete = false;
     dead = false;
     gravityDown = true;
+    victoryLevel = false;
 
     dude = makeDude( 0, 0, DUDE_COLOR );
 
@@ -320,7 +329,6 @@ function onSetup() {
 
     clearBoard();
     makeBoard();
-    
 
     var horiz_velocity = 0;
     var vert_velocity = 0;
@@ -339,19 +347,18 @@ function onKeyStart(key) {
                 vert_velocity = jumping;
             }
         } else if ( key == 32 ){ // spacebar
-            if ( shiftsRemaining != 0 && isNumber( shiftsRemaining ) ) {
-                gravityDown = !gravityDown
-                decrementShifts();
+            if ( gravityDown ){
+                shiftGrav( "up" );
+            } else {
+                shiftGrav( "down" );
             }
         } else if ( key == 38 ){ // up arrow
-            if ( gravityDown && shiftsRemaining != 0 && isNumber( shiftsRemaining ) ){
-                gravityDown = false;
-                decrementShifts();
+            if ( gravityDown ){    
+                shiftGrav( "up" );
             }
         } else if ( key == 40 ){ // down arrow
-            if ( !gravityDown && shiftsRemaining != 0 && isNumber( shiftsRemaining ) ){
-                gravityDown = true;
-                decrementShifts();
+            if ( !gravityDown ){    
+                shiftGrav( "down" );
             }
         } else if ( key == 27 ){ // escape = kill key
             death();
@@ -367,9 +374,9 @@ function onKeyEnd(key) {
     }
 }
 
-/*function onClick( x, y ){
+function onClick( x, y ){
      console.log( x.toString() + ", " + y.toString())
- }*/
+ }
 
 // Called 30 times or more per second
 function onTick() {
@@ -389,9 +396,6 @@ function render() {
 
     // draw the goal
     drawGoal();
-
-
-
 
     // draw any debugging shapes
     debugDraw();
@@ -414,8 +418,11 @@ function render() {
 }
 
 function simulate(){
-    happyMessage = null;
-    sadMessage = null;
+    // wipe any messages off the screen, unless it's the last level
+    if ( !victoryLevel ){
+        happyMessage = null;
+        sadMessage = null;
+    }
 
     if ( gravityDown ){
         jumping = JUMP_SPEED
@@ -497,12 +504,20 @@ function simulate(){
         leftDown = false;
         rightDown = false;
 
-        if ( timeSinceWin > 0 && timeSinceWin < 1.5 ){
-            // happy message
-            happyMessage = "GREAT JOB!";
-        } else if ( timeSinceWin > 1.5 ){
-            currentLevel++;
-            nextLevel();
+        // special case: if last level, restarts the game
+        if ( victoryLevel ){
+            if ( timeSinceWin > 1.5 ){
+                currentLevel = 0;
+                nextLevel();
+            }
+        } else {
+            if ( timeSinceWin > 0 && timeSinceWin < 1.5 ){
+                // happy message
+                happyMessage = "GREAT JOB!";
+            } else if ( timeSinceWin > 1.5 ){
+                currentLevel++;
+                nextLevel();
+            }
         }
     }
 }
@@ -609,6 +624,41 @@ function accelerateHoriz( dir ){
         removeAt( walls, lockWallsIndex );
         playSound( UNLOCK_SOUND );
     }
+
+    function shiftGrav( dir ){
+        if ( shiftsRemaining !== 0 && isNumber( shiftsRemaining ) ){
+            stopAllGravSounds();
+            decrementShifts();
+
+            if ( dir == "up" ){
+                    if ( inDownGrav ){
+                        playSound( NOSHIFT_SOUND );
+                    } else {
+                        gravityDown = false;
+                        playSound( UP_SOUND );
+                    }
+            } else if ( dir == "down" ){
+                    if ( inUpGrav ){
+                        playSound( NOSHIFT_SOUND );
+                    } else {
+                        gravityDown = true;
+                        playSound( DOWN_SOUND );
+                    }
+            } else {
+                alert( "Invalid gravity direction!")
+            }
+        } else if ( shiftsRemaining == 0 ){
+            playSound( NOSHIFT_SOUND );
+        }
+    }
+
+
+    function stopAllGravSounds(){
+        stopSound( UP_SOUND );
+        stopSound( DOWN_SOUND );
+        stopSound( NOSHIFT_SOUND );
+    }
+
 ///////////////////////////////////////////////////////////////
 //                                                           //
 //                      HELPER RULES                         //
@@ -680,6 +730,15 @@ function accelerateHoriz( dir ){
              "middle");
 
         if ( happyMessage != null ){
+            strokeText( happyMessage,
+                BOARD_SIZE_X * TILE_SIZE / 2,
+                BOARD_SIZE_Y * TILE_SIZE / 2,             
+                black, 
+                "100px Arial Black",
+                10, 
+                "center", 
+                "middle");
+
             fillText( happyMessage,
                 BOARD_SIZE_X * TILE_SIZE / 2,
                 BOARD_SIZE_Y * TILE_SIZE / 2,             
@@ -690,6 +749,15 @@ function accelerateHoriz( dir ){
             }
 
         if ( sadMessage != null ){
+            strokeText( sadMessage,
+                BOARD_SIZE_X * TILE_SIZE / 2,
+                BOARD_SIZE_Y * TILE_SIZE / 2,             
+                black, 
+                "100px Arial Black",
+                10, 
+                "center", 
+                "middle");
+
             fillText( sadMessage,
                 BOARD_SIZE_X * TILE_SIZE / 2,
                 BOARD_SIZE_Y * TILE_SIZE / 2,             
@@ -758,6 +826,11 @@ function accelerateHoriz( dir ){
                     }
                 }
             }
+        }
+
+        if ( victoryLevel ){
+            drawImage( VICTORY, (screenWidth - VICTORY_IMAGE_SIZE)/2, (screenHeight - VICTORY_IMAGE_SIZE)/2, VICTORY_IMAGE_SIZE, VICTORY_IMAGE_SIZE );
+            drawImage( PLAY_AGAIN, board[20][1].corner.x, board[20][1].corner.y, 305, 456 )
         }
     }
 
@@ -854,6 +927,15 @@ function accelerateHoriz( dir ){
 
         boardMessage = currentMap[ BOARD_SIZE_Y ];
         shiftsRemaining = currentMap[ BOARD_SIZE_Y + 1 ];
+
+        if ( currentMap[ BOARD_SIZE_Y + 2 ] == 1 ){
+            // it's the victory level!
+            victoryLevel = true;
+            happyMessage = "YOU DID IT!";
+            playSound( CHEERING_SOUND );
+
+
+        }
     }
 
     function clearBoard(){
