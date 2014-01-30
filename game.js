@@ -12,7 +12,7 @@ var VICTORY_IMAGE_SIZE    = 1000;
 
 // PHYSICS/MOVEMENT CONSTANTS
 var MAX_HORIZ_SPEED       = 8;
-var MAX_VERT_SPEED        = 80;  
+var MAX_VERT_SPEED        = 55;  
 var HORIZ_ACCEL           = 1;
 var GRAVITY               = 2;
 var JUMP_SPEED            = -35;
