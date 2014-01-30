@@ -11,7 +11,8 @@ var BOARD_SIZE_Y          = 16;
 var VICTORY_IMAGE_SIZE    = 1000;
 
 // PHYSICS/MOVEMENT CONSTANTS
-var MAX_SPEED             = 8;
+var MAX_HORIZ_SPEED       = 8;
+var MAX_VERT_SPEED        = 80;  
 var HORIZ_ACCEL           = 1;
 var GRAVITY               = 2;
 var JUMP_SPEED            = -35;
@@ -181,21 +182,21 @@ var level5      = [
 var level6      = [
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Xssssssss______________wX",
-            "X__________________A___wX",
+            "X__________________C___wX",
             "X______________________wX",
-            "X____B_________XXXXXXXXXX",
-            "X______________cXXXXXXXXX",
-            "X______________c__XXXXXXX",
-            "X______________c__b_XXXXX",
-            "X______________c__b__a__X",
-            "X______________c__b__a_GX",
-            "XS_______C_____c__b__a__X",
-            "X______________c__b_XXXXX",
-            "X______________c__XXXXXXX",
-            "X______________cXXXXXXXXX",
+            "X____A_________XXXXXXXXXX",
+            "X______________aXXXXXXXXX",
+            "X______________a__XXXXXXX",
+            "X______________a__b_XXXXX",
+            "X______________a__b__c__X",
+            "X______________a__b__c_GX",
+            "XS_______B_____a__b__c__X",
+            "X______________a__b_XXXXX",
+            "X______________a__XXXXXXX",
+            "X______________aXXXXXXXXX",
             "X______________XXXXXXXXXX",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
-            "Unlock your full potential.",
+            "Unlock your full potential!",
             -1 ]
 
 var level7      = [
@@ -342,25 +343,25 @@ var level13      = [
 
 // the victory level! Yay!
 var victory     = [
-                    "XXXXXXXXXXXXXXXXXXXXXXXXX",
-                    "X______________________GX",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "X_____S_________________X",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "X_______________________X",
-                    "XXXXXXXXXXXXXXXXXXXXXXXXX",
-                    "Party time!",
-                    -1,
-                    1 ]
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "X______________________GX",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_____S_________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "X_______________________X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXX",
+            "Party time!",
+            -1,
+            1 ]
 
 var allMaps = [ level0, level1, level2, level3, level4, level5, level6, level7,
                 level8, level9, level10, level11, level12, level13, victory ];
@@ -374,7 +375,6 @@ var UPARROW = loadImage( "upArrow.png");
 var DOWNARROW = loadImage( "downArrow.png");
 var KEY = loadImage( "key.png" )
 var LOCK = loadImage( "lock.png" );
-var OPENLOCK = loadImage( "openLock.png" );
 var OPENLOCKTRANS = loadImage( "openLockTrans.png" );
 var VICTORY = loadImage( "balloonsConfetti.png" );
 var PLAY_AGAIN = loadImage( "playagain.png" );
@@ -393,39 +393,37 @@ var CHEERING_SOUND = loadSound( "cheering.mp3" );
 //                     MUTABLE STATE                         //
 
 // BOARD VARIABLES
-    var board = [];
-    var walls = [];
-    var locks0 = [];
-    var locks0 = [];
-    var locks1 = [];
-    var locks2 = [];
-    var locks3 = [];
-    var locks4 = [];
-    var locks5 = [];
-    var locks6 = [];
-    var locks = [ locks0, locks1, locks2, locks3, locks4, locks5, locks6 ];
-    var spikes = [];
-    var upGrav = [];
-    var downGrav = [];
-    var keys = [];
-    var filledWalls = [];
-    var allLocks = [];
+var board = [];
+var walls = [];
+var locks0 = [];
+var locks0 = [];
+var locks1 = [];
+var locks2 = [];
+var locks3 = [];
+var locks4 = [];
+var locks5 = [];
+var locks6 = [];
+var locks = [ locks0, locks1, locks2, locks3, locks4, locks5, locks6 ];
+var spikes = [];
+var upGrav = [];
+var downGrav = [];
+var keys = [];
+var filledWalls = [];
+var allLocks = [];
 
-    var boardMessage;
-    var happyMessage;
-    var sadMessage;
+var boardMessage;
+var happyMessage;
+var sadMessage;
 
-    var debugShapes = [];
-
-    var dude;
-    var goal;
+var dude;
+var goal;
 
 // GAME STATE VARIABLES
 var leftDown = false;
 var rightDown = false;
 var dead = false;
 var levelComplete = false;
-var currentLevel = 13;
+var currentLevel = 0;
 var gravityDown = true;
 var shiftsRemaining = 0;
 var inUpGrav = false;
@@ -527,9 +525,6 @@ function render() {
 
     // draw the goal
     drawGoal();
-
-    // draw any debugging shapes
-    debugDraw();
 
     // draw & fill tiles with stuff in 'em
     drawAllTiles();
@@ -678,10 +673,10 @@ function accelerateHoriz( dir ){
     }
 
     // calculate new horiz_velocity, not exceeding max speed
-    if ( abs( horiz_velocity + mod ) <= MAX_SPEED ){
+    if ( abs( horiz_velocity + mod ) <= MAX_HORIZ_SPEED ){
         horiz_velocity = horiz_velocity + mod;  
-    } else if ( abs( horiz_velocity + mod ) > MAX_SPEED && abs( horiz_velocity ) < MAX_SPEED ){
-        horiz_velocity = MAX_SPEED * multiplier
+    } else if ( abs( horiz_velocity + mod ) > MAX_HORIZ_SPEED && abs( horiz_velocity ) < MAX_HORIZ_SPEED ){
+        horiz_velocity = MAX_HORIZ_SPEED * multiplier
     } else {
         horiz_velocity = horiz_velocity;
     }
@@ -705,8 +700,10 @@ function moveHoriz( dir ){
 
 // move vertically (i.e. apply gravity)
 function moveVert( dir ){
-    // first, find current accel.
-    vert_velocity = vert_velocity + grav_accel;
+    // first, find current accel. (making sure not to, by some glitch, reach superspeed)
+    if ( vert_velocity < MAX_VERT_SPEED ){
+        vert_velocity = vert_velocity + grav_accel;
+    }
     nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
     nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
 
@@ -816,7 +813,7 @@ function shiftGrav( dir ){
 //                                                           //
 //                      HELPER RULES                         //
 
-// MAKIN' STUFF
+// MAKIN' STUFF & DRAWIN' STUFF
 
     // make the dude
     function makeDude( xstart, ystart, startcolor ){
@@ -824,176 +821,16 @@ function shiftGrav( dir ){
         return { pos : position, startPos : position, radius : TILE_SIZE/2, color : startcolor };
     }
 
-    // draw the dude
-    function drawDude(){
-        fillCircle( dude.pos.x, dude.pos.y, dude.radius, dude.color );
-    }
-
-    function drawGoal(){
-        fillRectangle( goal.pos.x - TILE_SIZE/2, goal.pos.y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE, goal.color );
-    }
-
-    function drawBoardText(){
-        // level counter
-        fillText("LEVEL " + currentLevel.toString(),
-             board[ 0 ][ BOARD_SIZE_Y - 1 ].center.x - TILE_SIZE/4,
-             board[ 0 ][ BOARD_SIZE_Y - 1 ].center.y,             
-             black, 
-             "45px Arial Black", 
-             "left", 
-             "middle");
-
-        // shift counter
-        if ( isNumber( shiftsRemaining ) ){
-        fillText("SHIFTS REMAINING: ",
-             board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].corner.x,
-             board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
-             black, 
-             "45px Arial Black", 
-             "right", 
-             "middle");
-
-
-            if ( shiftsRemaining >= 0 ){
-                fillText(shiftsRemaining.toString(),
-                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x + TILE_SIZE/4,
-                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
-                    black, 
-                    "45px Arial Black", 
-                    "right", 
-                    "middle");
-            } else {
-                fillText( "∞",
-                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x,
-                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
-                    black, 
-                    "80px Arial Black", 
-                    "center", 
-                    "middle");
-            }
-        }
-
-        // board message
-        fillText( boardMessage,
-             board[ 0 ][ 0 ].center.x - TILE_SIZE/4,
-             board[ 0 ][ 0 ].center.y,             
-             black, 
-             "55px Arial Black", 
-             "left", 
-             "middle");
-
-        if ( happyMessage != null ){
-            strokeText( happyMessage,
-                BOARD_SIZE_X * TILE_SIZE / 2,
-                BOARD_SIZE_Y * TILE_SIZE / 2,             
-                black, 
-                "100px Arial Black",
-                10, 
-                "center", 
-                "middle");
-
-            fillText( happyMessage,
-                BOARD_SIZE_X * TILE_SIZE / 2,
-                BOARD_SIZE_Y * TILE_SIZE / 2,             
-                green, 
-                "100px Arial Black", 
-                "center", 
-                "middle");
-            }
-
-        if ( sadMessage != null ){
-            strokeText( sadMessage,
-                BOARD_SIZE_X * TILE_SIZE / 2,
-                BOARD_SIZE_Y * TILE_SIZE / 2,             
-                black, 
-                "100px Arial Black",
-                10, 
-                "center", 
-                "middle");
-
-            fillText( sadMessage,
-                BOARD_SIZE_X * TILE_SIZE / 2,
-                BOARD_SIZE_Y * TILE_SIZE / 2,             
-                red, 
-                "100px Arial Black", 
-                "center", 
-                "middle");
-        }
-    }
-
-    function debugDraw(){
-        for (var i = 0; i<debugShapes.length; i++){
-            fillCircle( debugShapes[i].x, debugShapes[i].y, 5, red );
-        }
-    }
-
-    function fillTile( tile, color ){
-            fillRectangle( tile.corner.x, tile.corner.y, TILE_SIZE, TILE_SIZE, color );
-    }
-
-    function fillTileArray( stuff, color ){
-        for (var i = 0; i<stuff.length; i++){
-            fillTile( stuff[i], color );
-        }
-    }
-    function fillAllTiles(){
-        // fill walls
-        fillTileArray( filledWalls, purple );
-
-        // fill upGrav and downGrav
-        fillTileArray( upGrav, transPurple );
-        fillTileArray( downGrav, transBlue );
-    }
-
-    function drawGrid(){
-        for ( var x = 0; x < BOARD_SIZE_X; x++ ){
-            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
-                strokeRectangle( board[x][y].corner.x, board[x][y].corner.y, TILE_SIZE, TILE_SIZE, gray, 1 );
-            }
-        }
-    }
-
-    function drawGravIndicator(){
-        if ( isNumber( shiftsRemaining ) ){
-            if ( gravityDown ){
-                drawImageInTile( DOWNARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
-            } else {
-                drawImageInTile( UPARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
-            }
-        }
-    }
-
-    function drawAllTiles(){
-        for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
-            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
-                if (board[x][y].image != null){
-                    if ( board[x][y].image == OPENLOCKTRANS ){
-                        for ( var i = 0; i < board[x][y].lockDraw; i++ ){
-                            drawImageInTile( board[x][y].image, board[x][y] )    
-                        }
-                        if ( board[x][y].lockDraw == 0 ){
-                            board[x][y].image = null;
-                        }
-                    } else {
-                    drawImageInTile( board[x][y].image, board[x][y] )
-                    }
-                }
-            }
-        }
-
-        if ( victoryLevel ){
-            drawImage( VICTORY, (screenWidth - VICTORY_IMAGE_SIZE)/2, (screenHeight - VICTORY_IMAGE_SIZE)/2, VICTORY_IMAGE_SIZE, VICTORY_IMAGE_SIZE );
-            drawImage( PLAY_AGAIN, board[20][1].corner.x, board[20][1].corner.y, 305, 456 )
-        }
-    }
-
     // make the board
     function makeBoard(){
-     // Create an array of columns
+        
+        // this will be used in a bit to make locks and keys
         lockKeyIndexes = [ "a", "b", "c", "f", "h", "i", "j" ];
-
+     
+        // select the appropriate map from the array of all maps, according to current level
         currentMap = allMaps[ currentLevel ];
-
+        
+        // Create an array of columns
         for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
             
             // Create this column
@@ -1012,8 +849,10 @@ function shiftGrav( dir ){
                 centerY = (screenHeight - TILE_SIZE * BOARD_SIZE_Y) / 2 + (y + 0.5) * TILE_SIZE;
                 tile.center = new vec2( centerX, centerY );
 
+                // coordinates of the tile according to grid squares
                 tile.coords = new vec2( x, y );
 
+                // TRANSLATE CHARACTERS IN MAP TO ELEMENTS ON GAMEBOARD
                 mapElement = substring( currentMap[y], x, x+1 )
                 
                 // walls, spawn, goal
@@ -1096,11 +935,10 @@ function shiftGrav( dir ){
             victoryLevel = true;
             happyMessage = "YOU DID IT!";
             playSound( CHEERING_SOUND );
-
-
         }
     }
 
+    // clears the board so that the next level can be drawn
     function clearBoard(){
         board = [];
         walls = [];
@@ -1119,9 +957,181 @@ function shiftGrav( dir ){
         allLocks = [];
     }
 
+    // draw the dude
+    function drawDude(){
+        fillCircle( dude.pos.x, dude.pos.y, dude.radius, dude.color );
+    }
+
+    // draw the goal
+    function drawGoal(){
+        fillRectangle( goal.pos.x - TILE_SIZE/2, goal.pos.y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE, goal.color );
+    }
+
+    // draw all of the text on the board
+    function drawBoardText(){
+        // level counter
+        fillText("LEVEL " + currentLevel.toString(),
+             board[ 0 ][ BOARD_SIZE_Y - 1 ].center.x - TILE_SIZE/4,
+             board[ 0 ][ BOARD_SIZE_Y - 1 ].center.y,             
+             black, 
+             "45px Arial Black", 
+             "left", 
+             "middle");
+
+        // shift counter
+        if ( isNumber( shiftsRemaining ) ){
+        fillText("SHIFTS REMAINING: ",
+             board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].corner.x,
+             board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
+             black, 
+             "45px Arial Black", 
+             "right", 
+             "middle");
+
+
+            if ( shiftsRemaining >= 0 ){
+                fillText(shiftsRemaining.toString(),
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x + TILE_SIZE/4,
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
+                    black, 
+                    "45px Arial Black", 
+                    "right", 
+                    "middle");
+            } else {
+                fillText( "∞",
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x,
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
+                    black, 
+                    "80px Arial Black", 
+                    "center", 
+                    "middle");
+            }
+        }
+
+        // board message
+        fillText( boardMessage,
+             board[ 0 ][ 0 ].center.x - TILE_SIZE/4,
+             board[ 0 ][ 0 ].center.y,             
+             black, 
+             "55px Arial Black", 
+             "left", 
+             "middle");
+
+        // happy message
+        if ( happyMessage != null ){
+            strokeText( happyMessage,
+                BOARD_SIZE_X * TILE_SIZE / 2,
+                BOARD_SIZE_Y * TILE_SIZE / 2,             
+                black, 
+                "100px Arial Black",
+                10, 
+                "center", 
+                "middle");
+
+            fillText( happyMessage,
+                BOARD_SIZE_X * TILE_SIZE / 2,
+                BOARD_SIZE_Y * TILE_SIZE / 2,             
+                green, 
+                "100px Arial Black", 
+                "center", 
+                "middle");
+            }
+
+        // sad message
+        if ( sadMessage != null ){
+            strokeText( sadMessage,
+                BOARD_SIZE_X * TILE_SIZE / 2,
+                BOARD_SIZE_Y * TILE_SIZE / 2,             
+                black, 
+                "100px Arial Black",
+                10, 
+                "center", 
+                "middle");
+
+            fillText( sadMessage,
+                BOARD_SIZE_X * TILE_SIZE / 2,
+                BOARD_SIZE_Y * TILE_SIZE / 2,             
+                red, 
+                "100px Arial Black", 
+                "center", 
+                "middle");
+        }
+    }
+
+    // fill a single tile with the specified color
+    function fillTile( tile, color ){
+            fillRectangle( tile.corner.x, tile.corner.y, TILE_SIZE, TILE_SIZE, color );
+    }
+
+    // for an entire array of tiles, fill each with the specified color
+    function fillTileArray( stuff, color ){
+        for (var i = 0; i<stuff.length; i++){
+            fillTile( stuff[i], color );
+        }
+    }
+
+    // running this function fills all of the tiles that ought to be solid colors
+    function fillAllTiles(){
+        // fill walls
+        fillTileArray( filledWalls, purple );
+
+        // fill upGrav and downGrav
+        fillTileArray( upGrav, transPurple );
+        fillTileArray( downGrav, transBlue );
+    }
+
+    // draw grid-lines
+    function drawGrid(){
+        for ( var x = 0; x < BOARD_SIZE_X; x++ ){
+            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
+                strokeRectangle( board[x][y].corner.x, board[x][y].corner.y, TILE_SIZE, TILE_SIZE, gray, 1 );
+            }
+        }
+    }
+
+    // draw an arrow on the right side of the screen that indicates direction of gravity
+    function drawGravIndicator(){
+        if ( isNumber( shiftsRemaining ) ){
+            if ( gravityDown ){
+                drawImageInTile( DOWNARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
+            } else {
+                drawImageInTile( UPARROW, board[ BOARD_SIZE_X - 1 ][BOARD_SIZE_Y - 2] );
+            }
+        }
+    }
+
     // put an image in a tile, filling the entire tile
     function drawImageInTile( image, tile ){
         drawImage( image, tile.corner.x, tile.corner.y, TILE_SIZE, TILE_SIZE )
+    }
+
+    // for each square of the board, if that square as an associated image, draw it
+    function drawAllTiles(){
+        for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
+            for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
+                if (board[x][y].image != null){
+                    if ( board[x][y].image == OPENLOCKTRANS ){
+                        // special case: if the tile is an open lock, draw the image multiple times;
+                            // the number of times it is drawn will decrease over time, producing a
+                            // fade effect
+                        for ( var i = 0; i < board[x][y].lockDraw; i++ ){
+                            drawImageInTile( board[x][y].image, board[x][y] )    
+                        }
+                        if ( board[x][y].lockDraw == 0 ){
+                            board[x][y].image = null;
+                        }
+                    } else {
+                        drawImageInTile( board[x][y].image, board[x][y] )
+                    }
+                }
+            }
+        }
+
+        // if this is the final level, draw some extra images (balloons + confetti, and "play again" indicator)
+        if ( victoryLevel ){
+            drawImage( VICTORY, (screenWidth - VICTORY_IMAGE_SIZE)/2, (screenHeight - VICTORY_IMAGE_SIZE)/2, VICTORY_IMAGE_SIZE, VICTORY_IMAGE_SIZE );
+            drawImage( PLAY_AGAIN, board[20][1].corner.x, board[20][1].corner.y, 305, 456 )
+        }
     }
 
 // MODIFYIN' STUFF
@@ -1131,45 +1141,24 @@ function shiftGrav( dir ){
         object.pos = new vec2(pos)
     }
 
-    // set X position of an object
-    function setPosX( object, posX ) {
-        object.pos = new vec2( posX, object.pos.y )
-    }
-
-    // set Y position of an object
-    function setPosY( object, posY ) {
-        object.pos = new vec2( object.pos.x, posY )
-    }
-
+    // decrease the number of shifts remaining by one, if this is a level where shifting is enabled
     function decrementShifts(){
         if ( isNumber( shiftsRemaining ) ){
             shiftsRemaining--
         }
     }
 
+// INFORMATIONAL FUNCTIONS
 
-// get index of a tile, given an (x,y) position
+    // get index of a tile, given an (x,y) position
     function getTile( pos ){
         xIndex = floor( pos.x / TILE_SIZE );
         yIndex = floor( pos.y / TILE_SIZE );
         return board[xIndex][yIndex];
     }
 
-// check for a collision in a position
-    function checkIntersection( tile, pos, direction ){
-        var tileEdges = []; 
-        if ( direction == "horiz" ){
-            tileEdges = pointsOnSquare( tile.corner, "horiz" );
-        } else {
-            tileEdges = pointsOnSquare( tile.corner );
-        }
-            intersection = forAny( tileEdges, function( point ){ return withinCircle( point, pos )} )
-
-        return intersection;
-    }
-
     // check if a given point is within a circle the size of 'dude' (either at a given position or,
-        // otherwise, centered at dude.pos)
+            // otherwise, centered at dude.pos)
     function withinCircle( point, pos ){
         if (pos == null){
             pos = dude.pos;
@@ -1188,11 +1177,17 @@ function shiftGrav( dir ){
         var z = 5 //number of points per side
         var a;
 
+
+        // when detecting for horizontal collisions, the points of contact are slightly
+            // more towards the center of the tile, so the dude doesn't get caught on the
+            // corner of a floor tile, for instance
         if ( direction == "horiz"){
-            a = 2;
+            a = 2; 
         } else {
             a = 0;
         }
+
+        // calculate all four corners and insert into results array
         var nwCorner = new vec2( corner.x, corner.y + a )
         var neCorner = new vec2( corner.x + TILE_SIZE, corner.y + a )
         var seCorner = new vec2( corner.x + TILE_SIZE, corner.y - a + TILE_SIZE )
@@ -1203,6 +1198,7 @@ function shiftGrav( dir ){
         insertBack( squareEdges, seCorner );
         insertBack( squareEdges, swCorner );
 
+        // calculate intermediate points on edges and insert into results array
         for (var i=1; i<z; i++){
 
             ePoint = new vec2( neCorner.x, neCorner.y + i * (TILE_SIZE/z) )
@@ -1219,6 +1215,22 @@ function shiftGrav( dir ){
         }
 
         return squareEdges
+    }
+
+    // check for a collision in a position
+    function checkIntersection( tile, pos, direction ){
+        var tileEdges = []; 
+        if ( direction == "horiz" ){
+            tileEdges = pointsOnSquare( tile.corner, "horiz" );
+        } else {
+            tileEdges = pointsOnSquare( tile.corner );
+        }
+            // if for any of the points on the edge of a square that point is within a circle of radius "dude"
+                // centered at the dude's position (i.e. if that point is within the dude) there is a collision:
+                // return true
+            intersection = forAny( tileEdges, function( point ){ return withinCircle( point, pos )} )
+
+        return intersection;
     }
 
 // LOGIC
