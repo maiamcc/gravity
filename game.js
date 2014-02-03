@@ -1143,7 +1143,7 @@ function shiftGrav( dir ){
 
     // decrease the number of shifts remaining by one, if this is a level where shifting is enabled
     function decrementShifts(){
-        if ( isNumber( shiftsRemaining ) ){
+        if ( isNumber( shiftsRemaining ) && shiftsRemaining > 0 ){
             shiftsRemaining--
         }
     }
