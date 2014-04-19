@@ -275,7 +275,7 @@ var level10      = [
             "XuuuuuuXXXXuuuuuuuuuuuXXX",
             "XuuuuuuuuuuuuuuuuuuCuuXXX",
             "XuuBuuuuuuuuuuuuuuuuuuXXX",
-            "XuuuuuuuuHuunnnuuuuuuuXAX",
+            "XuuuuuuuuHuunnnuuuuuuuXXX",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Boinnnng!",
             4 ]
