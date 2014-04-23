@@ -512,6 +512,7 @@ function onKeyEnd(key) {
 function onTick() {
     simulate();
     render();
+    console.log( vert_velocity )
 }
 
 function render() {
@@ -658,6 +659,11 @@ function simulate(){
             }
         }
     }
+
+    // stop-gap bug fix: if you somehow ended up off-the board, reset the level
+    if ( offScreen() && !dead ){
+        death();
+        }
 }
 
 // calculate horizontal acceleration and uses it to change velocity
@@ -698,12 +704,30 @@ function moveHoriz( dir ){
         }
 }
 
+// set vertical velocity to maximum (in either pos. or neg. direction, depending on which way you're moving)
+    function maxVertVelocity(){    
+        if ( vert_velocity > 0 ){
+            vert_velocity = MAX_VERT_SPEED;
+        } else if ( vert_velocity < 0 ){
+            vert_velocity = MAX_VERT_SPEED * -1;
+        }
+    }
+
 // move vertically (i.e. apply gravity)
 function moveVert( dir ){
     // first, find current accel. (making sure not to, by some glitch, reach superspeed)
-    if ( vert_velocity < MAX_VERT_SPEED ){
-        vert_velocity = vert_velocity + grav_accel;
+    if ( abs(vert_velocity) > MAX_VERT_SPEED ){
+        // (if something has gone wrong and you're moving too fast, get speed back under maximum.))
+        maxVertVelocity();
+    } else if ( abs(vert_velocity) < MAX_VERT_SPEED ){
+        if ( abs(vert_velocity + grav_accel) < MAX_VERT_SPEED ){
+            vert_velocity = vert_velocity + grav_accel;            
+        } else {
+            maxVertVelocity()
+        }
     }
+
+   
     nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
     nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
 
@@ -733,7 +757,7 @@ function moveVert( dir ){
             // otherwise, move by that distance
             setPos( dude, nextPos );
         }
-}
+    }
 
 // what happens when you beat the level
 function beatLevel(){
@@ -1231,6 +1255,20 @@ function shiftGrav( dir ){
             intersection = forAny( tileEdges, function( point ){ return withinCircle( point, pos )} )
 
         return intersection;
+    }
+
+    // check if the dude is off the map
+    function offScreen(){
+        // if dude's x or y coordinates are past the centers of the upper left/lower right corner of the
+            // board, return 'true'
+        if ( dude.pos.x <= board[0][0].center.x ||
+                dude.pos.x >= board[BOARD_SIZE_X - 1][BOARD_SIZE_Y - 1].center.x ||
+                dude.pos.y <= board[0][0].center.y ||
+                dude.pos.y >= board[BOARD_SIZE_X - 1][BOARD_SIZE_Y - 1].center.y ){
+            return true;
+        } else { // otherwise, return 'false'
+            return false;
+        }
     }
 
 // LOGIC
