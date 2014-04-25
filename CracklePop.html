@@ -1,0 +1,25 @@
+<html>
+<title>
+CracklePop
+</title>
+<body>
+<script>
+
+for (var i=1;i<=100;i++)
+{ 
+  if( i%3 == 0 && i%5 == 0 ){ // if divisible by 3 and 5
+    document.write( "<br>CracklePop")
+  } else if ( i%3 == 0 ){ // if divisible by 3
+    document.write( "<BR>Crackle" )
+  } else if ( i%5 == 0 ){ // if divisible by 5
+    document.write( "<br>Pop")
+  } else if ( i == 1 ){ // special case for i = 1 so there are no stray line breaks
+    document.write( i )
+  } else { // in all other cases, print the number itself
+    document.write("<br>" + i );
+  }
+}
+
+</script>
+</body>
+</html>
