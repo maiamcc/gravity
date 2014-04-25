@@ -512,7 +512,6 @@ function onKeyEnd(key) {
 function onTick() {
     simulate();
     render();
-    console.log( vert_velocity )
 }
 
 function render() {
