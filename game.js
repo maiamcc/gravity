@@ -512,7 +512,6 @@ function onKeyEnd(key) {
 function onTick() {
     simulate();
     render();
-    console.log( vert_velocity )
 }
 
 function render() {
@@ -973,6 +972,7 @@ function shiftGrav( dir ){
         locks4 = [];
         locks5 = [];
         locks6 = [];
+        locks = [ locks0, locks1, locks2, locks3, locks4, locks5, locks6 ];
         spikes = [];
         upGrav = [];
         downGrav = [];
