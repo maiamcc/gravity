@@ -42,7 +42,7 @@ var DUDE_COLOR = cyan;
         n, e, s, w = spikes facing in that direction
         u, d = tiles that set gravity to up or down
         a, b, c, f, h, i = locks
-        A, B, C, F, H, I = corresponding keys
+        A, B, C, F, H, I = corresponding keys 
 
     Information stored after the end of the board:
         17th line --> board message (displays at the top of the level)
