@@ -367,6 +367,8 @@ var allMaps = [ level0, level1, level2, level3, level4, level5, level6, level7,
                 level8, level9, level10, level11, level12, level13, victory ];
 
 // IMAGES
+var SOUND_ON_ICON = loadImage( "soundOn.png" );
+var SOUND_OFF_ICON = loadImage( "soundOff.png" );
 var NSPIKES = loadImage( "nSpikes.png");
 var ESPIKES = loadImage( "eSpikes.png");
 var SSPIKES = loadImage( "sSpikes.png");
@@ -387,6 +389,7 @@ var UP_SOUND = loadSound( "alarmup.wav" );
 var DOWN_SOUND = loadSound( "alarmdown.wav" );
 var NOSHIFT_SOUND = loadSound( " noShift.mp3 ");
 var CHEERING_SOUND = loadSound( "cheering.mp3" );
+var soundOn = true;
 
 ///////////////////////////////////////////////////////////////
 //                                                           //
@@ -508,6 +511,14 @@ function onKeyEnd(key) {
     }
 }
 
+// When the mouse is clicked (currently only relevant for turning sound on/off)
+function onClick( x, y ){
+    // is the click in the tile with the sound icon? If so, toggle sound on/off.
+    if( inTile( x, y, soundTile ) ){
+        soundOn = !soundOn;
+    }
+}
+
 // Called 30 times or more per second
 function onTick() {
     simulate();
@@ -527,8 +538,9 @@ function render() {
     drawGoal();
 
     // draw & fill tiles with stuff in 'em
-    drawAllTiles();
+    setSoundIcon();
     fillAllTiles();
+    drawAllTiles();
 
     // draw the player
     drawDude();
@@ -764,7 +776,7 @@ function beatLevel(){
         dude.color = purple;
         levelComplete = true;
         winTime = currentTime();
-        playSound( YAY_SOUND );
+        playSoundConditional( YAY_SOUND );
     }
 }
 
@@ -774,7 +786,7 @@ function death(){
         dude.color = red;
         dead = true;
         deathTime = currentTime();
-        playSound( SPIKE_SOUND );
+        playSoundConditional( SPIKE_SOUND );
     }
 }
 
@@ -802,7 +814,7 @@ function openLock( tile ){
     lockWallsIndex = indexOf( walls, tile );
     removeAt( walls, lockWallsIndex );
 
-    playSound( UNLOCK_SOUND );
+    playSoundConditional( UNLOCK_SOUND );
 }
 
 // shift gravity in specified direction, if there are shifts remaining
@@ -812,23 +824,23 @@ function shiftGrav( dir ){
 
         if ( dir == "up" ){
                 if ( inDownGrav ){
-                    playSound( NOSHIFT_SOUND );
+                    playSoundConditional( NOSHIFT_SOUND );
                 } else {
                     gravityDown = false;
-                    playSound( UP_SOUND );
+                    playSoundConditional( UP_SOUND );
                 }
         } else if ( dir == "down" ){
                 if ( inUpGrav ){
-                    playSound( NOSHIFT_SOUND );
+                    playSoundConditional( NOSHIFT_SOUND );
                 } else {
                     gravityDown = true;
-                    playSound( DOWN_SOUND );
+                    playSoundConditional( DOWN_SOUND );
                 }
         } else {
             alert( "Invalid gravity direction!")
         }
     } else if ( shiftsRemaining == 0 ){
-        playSound( NOSHIFT_SOUND );
+        playSoundConditional( NOSHIFT_SOUND );
     }
 }
 
@@ -953,12 +965,17 @@ function shiftGrav( dir ){
         boardMessage = currentMap[ BOARD_SIZE_Y ];
         shiftsRemaining = currentMap[ BOARD_SIZE_Y + 1 ];
 
+
         if ( currentMap[ BOARD_SIZE_Y + 2 ] == 1 ){
             // it's the victory level!
             victoryLevel = true;
             happyMessage = "YOU DID IT!";
-            playSound( CHEERING_SOUND );
+            playSoundConditional( CHEERING_SOUND );
         }
+
+        // set the coordinates of the tile containing the sound on/off icon
+        soundTile = board[BOARD_SIZE_X - 1][0];
+
     }
 
     // clears the board so that the next level can be drawn
@@ -1305,6 +1322,12 @@ function shiftGrav( dir ){
         return thisIndex;
     }
 
+    // check if given x and y are within a given tile
+    function inTile( x, y, tile ){
+        return( x > tile.corner.x && x < tile.corner.x + TILE_SIZE &&
+            y > tile.corner.y && y < tile.corner.y + TILE_SIZE )
+    }
+
 // SOUNDS
 
     // stops all sounds associated with gravity
@@ -1312,4 +1335,20 @@ function shiftGrav( dir ){
         stopSound( UP_SOUND );
         stopSound( DOWN_SOUND );
         stopSound( NOSHIFT_SOUND );
+    }
+
+    // plays sound, if sound is turned on
+    function playSoundConditional( sound ){
+        if( soundOn ){
+            playSound( sound )
+        }
+    }
+
+    // toggles sound on/off image
+    function setSoundIcon(){
+        if( soundOn ){
+            soundTile.image = SOUND_ON_ICON
+        } else {
+            soundTile.image = SOUND_OFF_ICON
+        }
     }
