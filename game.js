@@ -1331,17 +1331,17 @@ function shiftGrav( dir ){
 // SOUNDS
 
     // stops all sounds associated with gravity
-    function stopAllGravSounds(){
-        stopSound( UP_SOUND );
-        stopSound( DOWN_SOUND );
-        stopSound( NOSHIFT_SOUND );
-    }
-
     // plays sound, if sound is turned on
     function playSoundConditional( sound ){
         if( soundOn ){
             playSound( sound )
         }
+    }
+
+    function stopAllGravSounds(){
+        stopSound( UP_SOUND );
+        stopSound( DOWN_SOUND );
+        stopSound( NOSHIFT_SOUND );
     }
 
     // toggles sound on/off image
