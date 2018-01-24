@@ -12,7 +12,7 @@ var VICTORY_IMAGE_SIZE    = 1000;
 
 // PHYSICS/MOVEMENT CONSTANTS
 var MAX_HORIZ_SPEED       = 8;
-var MAX_VERT_SPEED        = 55;  
+var MAX_VERT_SPEED        = 55;
 var HORIZ_ACCEL           = 1;
 var GRAVITY               = 2;
 var JUMP_SPEED            = -35;
@@ -42,7 +42,7 @@ var DUDE_COLOR = cyan;
         n, e, s, w = spikes facing in that direction
         u, d = tiles that set gravity to up or down
         a, b, c, f, h, i = locks
-        A, B, C, F, H, I = corresponding keys 
+        A, B, C, F, H, I = corresponding keys
 
     Information stored after the end of the board:
         17th line --> board message (displays at the top of the level)
@@ -96,7 +96,7 @@ var level1 = [
             "z" ]
 
 // gravity intro
-var level2      = [ 
+var level2      = [
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "X_______________X______GX",
             "X_______________X_______X",
@@ -254,7 +254,7 @@ var level9      = [
             "X________wXXXXXXXXXXaaaXX",
             "X_________ssssssssss____X",
             "X_______________________X",
-            "X_________uuuuuuuuuu____X",    
+            "X_________uuuuuuuuuu____X",
             "X_S_______uuuuuuuuuu_G__X",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "Warning: persnickety gravity ahead!",
@@ -339,7 +339,7 @@ var level13      = [
             "X________x______________X",
             "XXXXXXXXXXXXXXXXXXXXXXXXX",
             "How very puzzling!",
-            -1 ]            
+            -1 ]
 
 // the victory level! Yay!
 var victory     = [
@@ -367,28 +367,28 @@ var allMaps = [ level0, level1, level2, level3, level4, level5, level6, level7,
                 level8, level9, level10, level11, level12, level13, victory ];
 
 // IMAGES
-var SOUND_ON_ICON = loadImage( "soundOn.png" );
-var SOUND_OFF_ICON = loadImage( "soundOff.png" );
-var NSPIKES = loadImage( "nSpikes.png");
-var ESPIKES = loadImage( "eSpikes.png");
-var SSPIKES = loadImage( "sSpikes.png");
-var WSPIKES = loadImage( "wSpikes.png");
-var UPARROW = loadImage( "upArrow.png");
-var DOWNARROW = loadImage( "downArrow.png");
-var KEY = loadImage( "key.png" )
-var LOCK = loadImage( "lock.png" );
-var OPENLOCKTRANS = loadImage( "openLockTrans.png" );
-var VICTORY = loadImage( "balloonsConfetti.png" );
-var PLAY_AGAIN = loadImage( "playagain.png" );
+var SOUND_ON_ICON = loadImage( "images/soundOn.png" );
+var SOUND_OFF_ICON = loadImage( "images/soundOff.png" );
+var NSPIKES = loadImage( "images/nSpikes.png" );
+var ESPIKES = loadImage( "images/eSpikes.png" );
+var SSPIKES = loadImage( "images/sSpikes.png" );
+var WSPIKES = loadImage( "images/wSpikes.png" );
+var UPARROW = loadImage( "images/upArrow.png" );
+var DOWNARROW = loadImage( "images/downArrow.png" );
+var KEY = loadImage( "images/key.png" );
+var LOCK = loadImage( "images/lock.png" );
+var OPENLOCKTRANS = loadImage( "images/openLockTrans.png" );
+var VICTORY = loadImage( "images/balloonsConfetti.png" );
+var PLAY_AGAIN = loadImage( "images/playagain.png" );
 
 // SOUNDS
-var UNLOCK_SOUND = loadSound( "unlock.mp3" );
-var YAY_SOUND = loadSound( "yay.mp3" );
-var SPIKE_SOUND = loadSound( "squish.mp3" );
-var UP_SOUND = loadSound( "alarmup.wav" );
-var DOWN_SOUND = loadSound( "alarmdown.wav" );
-var NOSHIFT_SOUND = loadSound( " noShift.mp3 ");
-var CHEERING_SOUND = loadSound( "cheering.mp3" );
+var UNLOCK_SOUND = loadSound( "sounds/unlock.mp3" );
+var YAY_SOUND = loadSound( "sounds/yay.mp3" );
+var SPIKE_SOUND = loadSound( "sounds/squish.mp3" );
+var UP_SOUND = loadSound( "sounds/alarmup.wav" );
+var DOWN_SOUND = loadSound( "sounds/alarmdown.wav" );
+var NOSHIFT_SOUND = loadSound( "sounds/noShift.mp3 ");
+var CHEERING_SOUND = loadSound( "sounds/cheering.mp3" );
 var soundOn = true;
 
 ///////////////////////////////////////////////////////////////
@@ -445,7 +445,7 @@ var nextPos;
 //                      EVENT RULES                          //
 
 
-// When setup happens... (gets called at the beginning of the game, 
+// When setup happens... (gets called at the beginning of the game,
     // and then at the beginning of each level)
 function onSetup() {
     // reset game state
@@ -469,7 +469,7 @@ function onSetup() {
 }
 
 // When a key is pushed
-function onKeyStart(key) {    
+function onKeyStart(key) {
     if ( !dead && !levelComplete ){
         if ( key == 37 ){ // left arrow --> move left
             leftDown = true;
@@ -488,12 +488,12 @@ function onKeyStart(key) {
                 decrementShifts();
             }
         } else if ( key == 38 ){ // up arrow --> set gravity = "up"
-            if ( gravityDown ){    
+            if ( gravityDown ){
                 shiftGrav( "up" );
                 decrementShifts();
             }
         } else if ( key == 40 ){ // down arrow --> set gravity = "down"
-            if ( !gravityDown ){    
+            if ( !gravityDown ){
                 shiftGrav( "down" );
                 decrementShifts();
             }
@@ -574,7 +574,7 @@ function simulate(){
 
         // move left or right
         if ( leftDown == true ){
-            moveHoriz( "left" );    
+            moveHoriz( "left" );
         } else if ( rightDown == true ){
             moveHoriz( "right" );
         }
@@ -612,7 +612,7 @@ function simulate(){
                 getKey( keyIndex );
             }
         }
-        
+
             // once a key has been gotten, can decrement lockDraw to fade out the lock
                 for ( var i = 0; i<allLocks.length; i++){
                     if ( !allLocks[i].active && allLocks[i].lockDraw > 0 ){
@@ -625,7 +625,7 @@ function simulate(){
         // when dude is dead...
         if ( dead ){
             timeSinceDeath = currentTime() - deathTime;
-            
+
             // disable motion
             leftDown = false;
             rightDown = false;
@@ -648,7 +648,7 @@ function simulate(){
     // if the level is complete...
     if ( levelComplete ){
         timeSinceWin = currentTime() - winTime;
-        
+
         // disable motion
         leftDown = false;
         rightDown = false;
@@ -691,7 +691,7 @@ function accelerateHoriz( dir ){
 
     // calculate new horiz_velocity, not exceeding max speed
     if ( abs( horiz_velocity + mod ) <= MAX_HORIZ_SPEED ){
-        horiz_velocity = horiz_velocity + mod;  
+        horiz_velocity = horiz_velocity + mod;
     } else if ( abs( horiz_velocity + mod ) > MAX_HORIZ_SPEED && abs( horiz_velocity ) < MAX_HORIZ_SPEED ){
         horiz_velocity = MAX_HORIZ_SPEED * multiplier
     } else {
@@ -716,7 +716,7 @@ function moveHoriz( dir ){
 }
 
 // set vertical velocity to maximum (in either pos. or neg. direction, depending on which way you're moving)
-    function maxVertVelocity(){    
+    function maxVertVelocity(){
         if ( vert_velocity > 0 ){
             vert_velocity = MAX_VERT_SPEED;
         } else if ( vert_velocity < 0 ){
@@ -732,13 +732,13 @@ function moveVert( dir ){
         maxVertVelocity();
     } else if ( abs(vert_velocity) < MAX_VERT_SPEED ){
         if ( abs(vert_velocity + grav_accel) < MAX_VERT_SPEED ){
-            vert_velocity = vert_velocity + grav_accel;            
+            vert_velocity = vert_velocity + grav_accel;
         } else {
             maxVertVelocity()
         }
     }
 
-   
+
     nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
     nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
 
@@ -751,14 +751,14 @@ function moveVert( dir ){
                 // if you STILL hit a wall, check half THAT distance
                 vert_velocity = vert_velocity/2
                 nextPos = new vec2( dude.pos.x, dude.pos.y + vert_velocity)
-                nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );            
+                nextCollides = forAny( walls, function( tile ){ return checkIntersection( tile, nextPos ) } );
                 if ( nextCollides ){
                     // if you STILL hit a wall, try half that distance, and if you still hit
                         //a wall, just stay still
                     vert_velocity = 0
                 } else {
                     // otherwise, move by that distance
-                    setPos( dude, nextPos );    
+                    setPos( dude, nextPos );
                 }
             } else {
                 // otherwise, move by that distance
@@ -772,7 +772,7 @@ function moveVert( dir ){
 
 // what happens when you beat the level
 function beatLevel(){
-    if ( !levelComplete && !dead ){        
+    if ( !levelComplete && !dead ){
         dude.color = purple;
         levelComplete = true;
         winTime = currentTime();
@@ -858,22 +858,22 @@ function shiftGrav( dir ){
 
     // make the board
     function makeBoard(){
-        
+
         // this will be used in a bit to make locks and keys
         lockKeyIndexes = [ "a", "b", "c", "f", "h", "i", "j" ];
-     
+
         // select the appropriate map from the array of all maps, according to current level
         currentMap = allMaps[ currentLevel ];
-        
+
         // Create an array of columns
         for ( var x = 0; x < BOARD_SIZE_X; x++ ) {
-            
+
             // Create this column
             board[x] = [];
 
             for ( var y = 0; y < BOARD_SIZE_Y; y++ ){
                 tile = makeObject();
-                
+
                 // Top left corner of the tile in pixels
                 cornerX = (screenWidth - TILE_SIZE * BOARD_SIZE_X) / 2 + x * TILE_SIZE;
                 cornerY = (screenHeight - TILE_SIZE * BOARD_SIZE_Y) / 2 + y * TILE_SIZE;
@@ -889,7 +889,7 @@ function shiftGrav( dir ){
 
                 // TRANSLATE CHARACTERS IN MAP TO ELEMENTS ON GAMEBOARD
                 mapElement = substring( currentMap[y], x, x+1 )
-                
+
                 // walls, spawn, goal
                 if ( mapElement == "X" ){
                     insertBack( walls, tile );
@@ -901,7 +901,7 @@ function shiftGrav( dir ){
                 } else if ( mapElement == "S" ){
                     dude.startPos = tile.center;
                     dude.pos = tile.center;
-                } 
+                }
 
                 // spikes
                 else if ( mapElement == "n" ){
@@ -928,7 +928,7 @@ function shiftGrav( dir ){
                 }
 
                 //keys and locks
-                else if ( mapElement == "A" || 
+                else if ( mapElement == "A" ||
                             mapElement == "B" ||
                             mapElement == "C" ||
                             mapElement == "F" ||
@@ -939,7 +939,7 @@ function shiftGrav( dir ){
                     tile.active = true;
                     insertionIndex = indexOf( lockKeyIndexes, mapElement.toLowerCase() );
                     insertAt( keys, insertionIndex, tile );
-                }  else if ( mapElement == "a" || 
+                }  else if ( mapElement == "a" ||
                                 mapElement == "b" ||
                                 mapElement == "c" ||
                                 mapElement == "f" ||
@@ -951,15 +951,15 @@ function shiftGrav( dir ){
                     tile.image = LOCK;
                     tile.active = true;
                     tile.lockDraw = 100;
-                    
-                    insertionIndex = indexOf( lockKeyIndexes, mapElement );
-                    insertBack( locks[ insertionIndex ], tile ); 
 
-                    insertBack( allLocks, tile )               
+                    insertionIndex = indexOf( lockKeyIndexes, mapElement );
+                    insertBack( locks[ insertionIndex ], tile );
+
+                    insertBack( allLocks, tile )
                 }
 
                 board[x][y] = tile;
-            }  
+            }
         }
 
         boardMessage = currentMap[ BOARD_SIZE_Y ];
@@ -1013,38 +1013,38 @@ function shiftGrav( dir ){
         // level counter
         fillText("LEVEL " + currentLevel.toString(),
              board[ 0 ][ BOARD_SIZE_Y - 1 ].center.x - TILE_SIZE/4,
-             board[ 0 ][ BOARD_SIZE_Y - 1 ].center.y,             
-             black, 
-             "45px Arial Black", 
-             "left", 
+             board[ 0 ][ BOARD_SIZE_Y - 1 ].center.y,
+             black,
+             "45px Arial Black",
+             "left",
              "middle");
 
         // shift counter
         if ( isNumber( shiftsRemaining ) ){
         fillText("SHIFTS REMAINING: ",
              board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].corner.x,
-             board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
-             black, 
-             "45px Arial Black", 
-             "right", 
+             board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,
+             black,
+             "45px Arial Black",
+             "right",
              "middle");
 
 
             if ( shiftsRemaining >= 0 ){
                 fillText(shiftsRemaining.toString(),
                     board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x + TILE_SIZE/4,
-                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
-                    black, 
-                    "45px Arial Black", 
-                    "right", 
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,
+                    black,
+                    "45px Arial Black",
+                    "right",
                     "middle");
             } else {
                 fillText( "∞",
                     board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.x,
-                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,             
-                    black, 
-                    "80px Arial Black", 
-                    "center", 
+                    board[ BOARD_SIZE_X - 1 ][ BOARD_SIZE_Y - 1 ].center.y,
+                    black,
+                    "80px Arial Black",
+                    "center",
                     "middle");
             }
         }
@@ -1052,29 +1052,29 @@ function shiftGrav( dir ){
         // board message
         fillText( boardMessage,
              board[ 0 ][ 0 ].center.x - TILE_SIZE/4,
-             board[ 0 ][ 0 ].center.y,             
-             black, 
-             "55px Arial Black", 
-             "left", 
+             board[ 0 ][ 0 ].center.y,
+             black,
+             "55px Arial Black",
+             "left",
              "middle");
 
         // happy message
         if ( happyMessage != null ){
             strokeText( happyMessage,
                 BOARD_SIZE_X * TILE_SIZE / 2,
-                BOARD_SIZE_Y * TILE_SIZE / 2,             
-                black, 
+                BOARD_SIZE_Y * TILE_SIZE / 2,
+                black,
                 "100px Arial Black",
-                10, 
-                "center", 
+                10,
+                "center",
                 "middle");
 
             fillText( happyMessage,
                 BOARD_SIZE_X * TILE_SIZE / 2,
-                BOARD_SIZE_Y * TILE_SIZE / 2,             
-                green, 
-                "100px Arial Black", 
-                "center", 
+                BOARD_SIZE_Y * TILE_SIZE / 2,
+                green,
+                "100px Arial Black",
+                "center",
                 "middle");
             }
 
@@ -1082,19 +1082,19 @@ function shiftGrav( dir ){
         if ( sadMessage != null ){
             strokeText( sadMessage,
                 BOARD_SIZE_X * TILE_SIZE / 2,
-                BOARD_SIZE_Y * TILE_SIZE / 2,             
-                black, 
+                BOARD_SIZE_Y * TILE_SIZE / 2,
+                black,
                 "100px Arial Black",
-                10, 
-                "center", 
+                10,
+                "center",
                 "middle");
 
             fillText( sadMessage,
                 BOARD_SIZE_X * TILE_SIZE / 2,
-                BOARD_SIZE_Y * TILE_SIZE / 2,             
-                red, 
-                "100px Arial Black", 
-                "center", 
+                BOARD_SIZE_Y * TILE_SIZE / 2,
+                red,
+                "100px Arial Black",
+                "center",
                 "middle");
         }
     }
@@ -1156,7 +1156,7 @@ function shiftGrav( dir ){
                             // the number of times it is drawn will decrease over time, producing a
                             // fade effect
                         for ( var i = 0; i < board[x][y].lockDraw; i++ ){
-                            drawImageInTile( board[x][y].image, board[x][y] )    
+                            drawImageInTile( board[x][y].image, board[x][y] )
                         }
                         if ( board[x][y].lockDraw == 0 ){
                             board[x][y].image = null;
@@ -1176,7 +1176,7 @@ function shiftGrav( dir ){
     }
 
 // MODIFYIN' STUFF
-    
+
     // set position of an object
     function setPos( object, pos ) {
         object.pos = new vec2(pos)
@@ -1210,7 +1210,7 @@ function shiftGrav( dir ){
         return mag <= dude.radius - 1;
     }
 
-    // returns a set of points on the edge of a tile 
+    // returns a set of points on the edge of a tile
         // direction == "horiz" --> only e & w edges. Otherwise, will return points on all 4 edges
     function pointsOnSquare( corner, direction ){
         var squareEdges = [];
@@ -1223,7 +1223,7 @@ function shiftGrav( dir ){
             // more towards the center of the tile, so the dude doesn't get caught on the
             // corner of a floor tile, for instance
         if ( direction == "horiz"){
-            a = 2; 
+            a = 2;
         } else {
             a = 0;
         }
@@ -1260,7 +1260,7 @@ function shiftGrav( dir ){
 
     // check for a collision in a position
     function checkIntersection( tile, pos, direction ){
-        var tileEdges = []; 
+        var tileEdges = [];
         if ( direction == "horiz" ){
             tileEdges = pointsOnSquare( tile.corner, "horiz" );
         } else {
@@ -1289,18 +1289,18 @@ function shiftGrav( dir ){
     }
 
 // LOGIC
-    
+
     // return 'true' if a given conditional function returns 'true' for ANY of the elements of an array
     function forAny( stuff, conditional ){
             var condition = false;
-                stuff.forEach( function( x ) { 
+                stuff.forEach( function( x ) {
                     var temp = conditional( x )
                             if ( temp !== true && temp !== false ){
                                 alert( "forAny passed a function that did not return true or false.)" );
                             }
-                                if( temp ) { 
-                                    condition = true 
-                                } 
+                                if( temp ) {
+                                    condition = true
+                                }
                             } )
             return condition;
     }
@@ -1314,11 +1314,11 @@ function shiftGrav( dir ){
                 var temp = conditional( stuff[i] )
                         if ( temp !== true && temp !== false ){
                             alert( "AAAH! (forAnyIndex passed a function that did not return true or false.)" );
-                        } else if( temp ) { 
+                        } else if( temp ) {
                             condition = true
-                            thisIndex = i;    
+                            thisIndex = i;
                         }
-            }   
+            }
         return thisIndex;
     }
 
